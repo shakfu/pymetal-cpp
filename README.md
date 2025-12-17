@@ -8,7 +8,7 @@ Python bindings for Apple's Metal GPU API, enabling high-performance GPU computi
 
 ## Overview
 
-PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nanobind, allowing you to:
+PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https://github.com/bkaradzic/metal-cpp) and [nanobind](<https://github.com/wjakob/nanobind>, allowing you to:
 
 - Write and execute Metal compute shaders from Python
 - Build complete graphics pipelines with vertex/fragment shaders
@@ -17,6 +17,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
 - Access advanced Metal features like events, binary archives, and capture scopes
 
 **Why PyMetal?**
+
 - **Direct Metal Access**: Full control over GPU resources, not a high-level abstraction
 - **Zero-Copy NumPy Integration**: Efficient data transfer between Python and GPU
 - **Complete API Coverage**: Compute, graphics, advanced synchronization, and debugging
@@ -28,6 +29,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
 ### Core Capabilities
 
 #### Phase 1: Compute Pipeline [x]
+
 - Device management and command queues
 - Buffer allocation and management
 - Shader compilation from Metal Shading Language source
@@ -36,6 +38,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
 - Zero-copy NumPy buffer integration
 
 #### Phase 2: Graphics Pipeline [x]
+
 - **Core Graphics**:
   - Texture creation and management
   - Render pipeline state with vertex/fragment shaders
@@ -52,6 +55,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
   - Metal layer integration for display
 
 #### Phase 3: Advanced Features [x]
+
 - **Event system** for fine-grained synchronization
 - **Shared events** for cross-process coordination
 - **Argument buffers** for efficient resource binding
@@ -60,6 +64,7 @@ PyMetal provides Pythonic access to Apple's Metal API through metal-cpp and nano
 - **Capture scopes** for Xcode GPU debugging integration
 
 #### Phase 4: Ray Tracing (Planned)
+
 - Ray tracing acceleration structures
 - Ray tracing pipelines
 - Intersection function tables
@@ -92,18 +97,20 @@ PyMetal achieves realistic GPU performance on Apple Silicon:
 ### Install from Source
 
 ```bash
-git clone https://github.com/shakfu/pymetal.git
-cd pymetal
+git clone https://github.com/shakfu/pymetal-cpp.git
+cd pymetal-cpp
 pip install -e .
 ```
 
 ### Dependencies
 
 PyMetal automatically installs:
+
 - `nanobind` - C++/Python bindings
 - `numpy` - Array operations
 
 For examples, you may also want:
+
 ```bash
 pip install scipy  # For image blur example
 ```
@@ -405,13 +412,15 @@ See [`examples/README.md`](examples/README.md) for detailed examples:
 6. **04_advanced_features.py** - Events, capture scopes, and more
 
 Run any example:
+
 ```bash
 python examples/01_image_blur.py
 ```
 
 ## When to Use PyMetal vs Alternatives
 
-### Use PyMetal When:
+### Use PyMetal When
+
 - [x] You need **custom GPU algorithms** not available in libraries
 - [x] You want **full control** over GPU resources
 - [x] You're doing **image processing, simulations, or custom compute**
@@ -419,14 +428,17 @@ python examples/01_image_blur.py
 - [x] You want to **learn GPU programming** on Apple Silicon
 - [x] You need **rasterization or compute pipelines** (ray tracing coming in Phase 4)
 
-### Use NumPy/SciPy When:
+### Use NumPy/SciPy When
+
 - [x] Standard operations (matrix multiply, FFT, convolution)
 - [x] Prototyping and development speed matters
 - [x] Small datasets where GPU overhead dominates
 - [x] Apple's Accelerate framework provides optimizations
 
-### Hybrid Approach:
+### Hybrid Approach
+
 Most applications use **both**:
+
 - NumPy for standard linear algebra
 - PyMetal for custom kernels and GPU-specific operations
 - Example: NumPy for matrix ops, PyMetal for custom activation functions
@@ -442,8 +454,8 @@ Most applications use **both**:
 
 ## Project Structure
 
-```
-pymetal/
+```sh
+pymetal-cpp/
 ├── src/
 │   ├── _pymetal.cpp           # Main C++ bindings
 │   └── pymetal/
@@ -468,6 +480,7 @@ pymetal/
 ## Testing
 
 Run the test suite:
+
 ```bash
 make test
 # or
@@ -475,6 +488,7 @@ pytest
 ```
 
 All 41 tests cover:
+
 - Device and buffer management
 - Compute pipeline execution
 - Graphics pipeline rendering
@@ -486,12 +500,14 @@ All 41 tests cover:
 ### Potential Phase 4 Features (On-Demand)
 
 **Ray Tracing Support:**
+
 - [ ] Acceleration structure creation and management
 - [ ] Ray tracing pipeline descriptors
 - [ ] Intersection function tables
 - [ ] Ray/primitive intersection queries
 
 **Additional Features:**
+
 - [ ] Resource heaps with placement
 - [ ] Sparse textures
 - [ ] Indirect argument buffers
@@ -500,12 +516,14 @@ All 41 tests cover:
 - [ ] Multi-GPU support
 
 **Tooling:**
+
 - [ ] Shader debugging utilities
 - [ ] Performance profiling helpers
 - [ ] Memory leak detection
 - [ ] Automatic optimization suggestions
 
 **Language Bindings:**
+
 - [ ] Type stubs for better IDE support
 - [ ] Documentation generator from C++ comments
 - [ ] Additional high-level abstractions
@@ -515,6 +533,7 @@ These features can be implemented as needed. Contributions welcome!
 ## Contributing
 
 Contributions welcome! Areas of interest:
+
 - **Ray tracing support** (most requested)
 - Additional examples and tutorials
 - Performance optimizations

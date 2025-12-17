@@ -51,7 +51,7 @@ jobs:
     if: github.event_name == 'release'
     environment:
       name: pypi
-      url: https://pypi.org/p/pymetal
+      url: https://pypi.org/p/pymetal-cpp
     permissions:
       id-token: write  # Required for trusted publishing
 

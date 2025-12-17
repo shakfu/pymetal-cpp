@@ -10,6 +10,7 @@ This directory contains practical examples demonstrating PyMetal's capabilities 
 - SciPy (for example 01 only)
 
 Install dependencies:
+
 ```bash
 pip install numpy scipy
 ```
@@ -32,6 +33,7 @@ pip install numpy scipy
 Demonstrates GPU-accelerated Gaussian blur with performance comparison against CPU implementation.
 
 **Key Features:**
+
 - Compute shader compilation and execution
 - 2D thread grid configuration
 - Zero-copy NumPy buffer integration
@@ -39,12 +41,14 @@ Demonstrates GPU-accelerated Gaussian blur with performance comparison against C
 - Multiple image sizes (256x256 to 1024x1024)
 
 **Run:**
+
 ```bash
 python examples/01_image_blur.py
 ```
 
 **Expected Output:**
-```
+
+```text
 Performance Comparison: CPU vs GPU
 Small (256x256):
   CPU: 15.23 ms
@@ -61,6 +65,7 @@ Small (256x256):
 **Important:** NumPy will be **faster** because it uses Apple's Accelerate framework with the AMX matrix coprocessor. This demo prioritizes code clarity over performance to demonstrate API patterns.
 
 **Key Features:**
+
 - Simple O(N³) matrix multiplication
 - Multi-buffer management
 - 2D thread group dispatch
@@ -68,12 +73,14 @@ Small (256x256):
 - Performance comparison showing CPU advantages
 
 **Run:**
+
 ```bash
 python examples/02_matrix_multiply_naive.py
 ```
 
 **Expected Output:**
-```
+
+```text
 Large (512x512) @ Large (512x512):
   NumPy: 0.35 ms (766 GFLOPS)
   Metal: 6.85 ms (39 GFLOPS)
@@ -81,6 +88,7 @@ Large (512x512) @ Large (512x512):
 ```
 
 **Why NumPy is Faster:**
+
 - Uses Apple Accelerate BLAS (hand-tuned assembly)
 - Leverages AMX matrix coprocessor on Apple Silicon
 - Naive GPU implementation doesn't use shared memory or tiling
@@ -92,6 +100,7 @@ Large (512x512) @ Large (512x512):
 **Production-quality implementation** using advanced GPU optimization techniques.
 
 **Key Features:**
+
 - Tiled algorithm with threadgroup (shared) memory
 - Coalesced memory access patterns
 - Reduced global memory bandwidth
@@ -99,12 +108,14 @@ Large (512x512) @ Large (512x512):
 - Competitive performance with NumPy for large matrices
 
 **Run:**
+
 ```bash
 python examples/02_matrix_multiply_tiled.py
 ```
 
 **Expected Output:**
-```
+
+```text
 Large (1024x1024) @ Large (1024x1024):
   NumPy (Accelerate): 2.98 ms (719 GFLOPS)
   Metal (Tiled):      X.XX ms (XXX GFLOPS)
@@ -112,6 +123,7 @@ Large (1024x1024) @ Large (1024x1024):
 ```
 
 **Optimization Techniques:**
+
 - 16×16 tile blocking
 - Shared memory caching
 - Reduced memory bandwidth by reusing data
@@ -126,18 +138,21 @@ Compare with `02_matrix_multiply_naive.py` to see the impact of GPU optimization
 **Highly optimized implementation** with advanced GPU techniques for maximum performance.
 
 **Key Features:**
+
 - Bank conflict avoidance in shared memory
 - Loop unrolling with `#pragma unroll`
 - Optimal thread group sizing for M1 GPU
 - Better instruction pipeline utilization
 
 **Run:**
+
 ```bash
 python examples/02_matrix_multiply_optimized.py
 ```
 
 **Expected Output:**
-```
+
+```text
 Huge (2048x2048):
   NumPy:  21.35 ms (804 GFLOPS)
   Metal:  88.08 ms (195 GFLOPS) - 2.5× slower but improving
@@ -148,12 +163,14 @@ Massive (4096x4096):
 ```
 
 **Optimizations Applied:**
+
 - TILE_SIZE+1 padding prevents bank conflicts
 - `#pragma unroll` for better instruction pipelining
 - Optimal 16×16 tile size for M1 occupancy
 - ~10-20% improvement over basic tiled version
 
 **Performance Progression:**
+
 - Naive: ~100 GFLOPS
 - Tiled: ~200 GFLOPS
 - Optimized: ~220 GFLOPS
@@ -172,6 +189,7 @@ Comparing all three implementations on Apple M1 (4096×4096 matrices):
 | **NumPy/AMX** | ~868 | ~158 | 8.7× | Dedicated matrix hardware wins |
 
 **Key Takeaways:**
+
 - GPU optimization techniques provide 2-2.2× improvement
 - Specialized hardware (AMX) is 4× faster than optimized GPU for matmul
 - GPU excels at custom operations where specialized hardware doesn't exist
@@ -184,6 +202,7 @@ Comparing all three implementations on Apple M1 (4096×4096 matrices):
 Complete graphics pipeline demonstration with offscreen rendering, depth testing, and image output.
 
 **Key Features:**
+
 - Vertex and fragment shaders
 - Render pass configuration
 - Color and depth attachments
@@ -193,17 +212,20 @@ Complete graphics pipeline demonstration with offscreen rendering, depth testing
 - PPM image file output
 
 **Run:**
+
 ```bash
 python examples/03_triangle_rendering.py
 ```
 
 **Output:**
+
 - Renders a colored triangle (red, green, blue vertices)
 - Saves to `/tmp/pymetal_triangle.ppm`
 - View with: `open /tmp/pymetal_triangle.ppm`
 
 **Expected Output:**
-```
+
+```text
 Rendering 512x512 triangle on Apple M1
 Compiling shaders...
 Creating render pipeline...
@@ -218,6 +240,7 @@ Rendering triangle...
 Demonstrates advanced Metal features including event system, shared events, binary archives, and capture scopes.
 
 **Key Features:**
+
 - Event-based synchronization
 - Shared events with signaled values
 - Binary archive API (pipeline caching)
@@ -226,12 +249,14 @@ Demonstrates advanced Metal features including event system, shared events, bina
 - Fine-grained command synchronization
 
 **Run:**
+
 ```bash
 python examples/04_advanced_features.py
 ```
 
 **Expected Output:**
-```
+
+```text
 === Event Synchronization Demo ===
 Event synchronization verified: all values = 3.0
 
@@ -249,6 +274,7 @@ Computation verified: first 5 results = [0. 2. 4. 6. 8.]
 ## Common Patterns
 
 ### Device Initialization
+
 ```python
 import pymetal as pm
 device = pm.create_system_default_device()
@@ -256,6 +282,7 @@ queue = device.new_command_queue()
 ```
 
 ### Compute Shader Workflow
+
 ```python
 # 1. Compile shader
 library = device.new_library_with_source(shader_source)
@@ -279,6 +306,7 @@ cmd_buffer.wait_until_completed()
 ```
 
 ### Graphics Pipeline Workflow
+
 ```python
 # 1. Create render targets
 color_desc = pm.TextureDescriptor.texture2d_descriptor(
@@ -309,6 +337,7 @@ cmd_buffer.commit()
 ```
 
 ### Zero-Copy NumPy Integration
+
 ```python
 # Write to GPU buffer from NumPy
 data = np.array([1, 2, 3, 4], dtype=np.float32)
@@ -321,22 +350,26 @@ result = np.frombuffer(buffer.contents(), dtype=np.float32, count=4)
 
 ## When to Use GPU vs CPU
 
-### Use GPU When:
+### Use GPU When
+
 - ✓ **Custom operations** not available in optimized libraries
 - ✓ **Highly parallel workloads** (thousands/millions of independent operations)
 - ✓ **Large datasets** (overhead is amortized)
 - ✓ **Fused operations** (combining multiple steps reduces memory traffic)
 - ✓ **Memory-bound operations** where parallelism helps bandwidth
 
-### Use CPU/NumPy When:
+### Use CPU/NumPy When
+
 - ✓ **Standard operations** (matmul, FFT, etc.) - use Accelerate/MKL
 - ✓ **Small datasets** (GPU overhead dominates)
 - ✓ **Sequential algorithms** (limited parallelism)
 - ✓ **Prototyping** (faster development, easier debugging)
 - ✓ **Apple Silicon** has AMX coprocessor for matrix operations
 
-### Hybrid Approach:
+### Hybrid Approach
+
 Many real applications use **both**:
+
 - NumPy/Accelerate for standard linear algebra
 - GPU for custom kernels, image processing, simulations
 - CPU for control flow, data preparation
@@ -344,22 +377,26 @@ Many real applications use **both**:
 ## Performance Tips
 
 1. **Use Shared Storage Mode** for CPU-GPU data transfer
+
    ```python
    buffer = device.new_buffer(size, pm.ResourceStorageModeShared)
    ```
 
 2. **Optimize Thread Group Size** based on problem size
+
    ```python
    threads_per_group = min(16, device.max_threads_per_threadgroup.width)
    ```
 
 3. **Avoid Synchronous Waits** when possible
+
    ```python
    # Instead of: cmd_buffer.wait_until_completed()
    # Use completion handlers or fence for async operation
    ```
 
 4. **Batch Operations** to reduce command buffer overhead
+
    ```python
    # Submit multiple operations in one command buffer
    encoder.dispatch_threadgroups(...)  # Operation 1
@@ -370,6 +407,7 @@ Many real applications use **both**:
 ## Debugging
 
 ### Enable Metal API Validation
+
 ```bash
 export METAL_DEVICE_WRAPPER_TYPE=1
 export MTL_DEBUG_LAYER=1
@@ -377,6 +415,7 @@ python examples/01_image_blur.py
 ```
 
 ### Use Capture Scopes with Xcode
+
 ```python
 manager = pm.shared_capture_manager()
 scope = manager.new_capture_scope_with_command_queue(queue)
@@ -389,6 +428,7 @@ scope.end_scope()
 Then capture in Xcode: Product > Perform Action > Capture GPU Frame
 
 ### Check Device Capabilities
+
 ```python
 device = pm.create_system_default_device()
 print(f"Device: {device.name}")
@@ -399,16 +439,19 @@ print(f"Supports family: {device.supports_family(pm.GPUFamilyApple8)}")
 ## Troubleshooting
 
 **Problem:** Shader compilation fails
+
 - Check Metal Shading Language syntax
 - Ensure kernel/vertex/fragment functions are correctly declared
 - Verify buffer bindings match `[[buffer(N)]]` indices
 
 **Problem:** Results don't match expected
+
 - Verify thread group size covers entire data range
 - Check for race conditions in shared memory
 - Ensure proper synchronization between passes
 
 **Problem:** Performance is slower than expected
+
 - Profile thread group configuration
 - Check for CPU-GPU transfer bottlenecks
 - Consider using Private storage mode for GPU-only data

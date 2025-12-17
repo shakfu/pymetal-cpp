@@ -7,6 +7,7 @@ The metal-cpp library provides comprehensive C++ bindings for Apple's Metal GPU 
 ## Architecture Overview
 
 Metal follows a **command buffer encoding pattern**:
+
 1. Create GPU device and command queue
 2. Allocate resources (buffers, textures)
 3. Compile shaders into pipeline states
@@ -18,6 +19,7 @@ Metal follows a **command buffer encoding pattern**:
 These classes form the minimum viable Metal wrapper and are required for any GPU work:
 
 ### Device Management
+
 - **`MTL::Device`** - Primary GPU interface
   - `CreateSystemDefaultDevice()` - Get default GPU (global function)
   - `CopyAllDevices()` - Enumerate GPUs
@@ -30,6 +32,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 **Why essential**: Entry point to all Metal functionality. Nothing works without a device.
 
 ### Command Submission
+
 - **`MTL::CommandQueue`** - Command submission pipeline
   - `commandBuffer()` - Create new command buffer
   - `device()` - Access parent device
@@ -47,6 +50,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 **Why essential**: All GPU work flows through command buffers. Core abstraction for work submission.
 
 ### Memory Resources
+
 - **`MTL::Buffer`** - Linear GPU memory
   - `contents()` - CPU-accessible pointer (for shared buffers)
   - `didModifyRange(range)` - Notify GPU of CPU writes
@@ -62,6 +66,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 **Why essential**: Can't do GPU work without memory. Buffers for compute, textures for graphics.
 
 ### Shader Compilation
+
 - **`MTL::Library`** - Compiled shader container
   - `newFunction(name)` - Extract shader by name
   - `functionNames()` - List available shaders
@@ -72,6 +77,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 **Why essential**: GPU needs shader code to execute. These load and manage compiled shaders.
 
 ### Graphics Pipeline
+
 - **`MTL::RenderPipelineState`** - Immutable graphics pipeline configuration
   - Created via `device.newRenderPipelineState(descriptor)`
   - No direct methods (opaque state object)
@@ -96,6 +102,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 **Why essential**: Required for any rendering. Draws triangles to screen.
 
 ### Compute Pipeline
+
 - **`MTL::ComputePipelineState`** - Immutable compute pipeline
   - Properties: `maxTotalThreadsPerThreadgroup`, `threadExecutionWidth`
 
@@ -115,6 +122,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 **Why essential**: Required for compute/AI/data processing workloads.
 
 ### Render Target Configuration
+
 - **`MTL::RenderPassDescriptor`** - Defines rendering targets
   - `colorAttachments` - Array of color targets
   - `depthAttachment`, `stencilAttachment` - Depth/stencil targets
@@ -137,6 +145,7 @@ These classes form the minimum viable Metal wrapper and are required for any GPU
 Enables practical applications beyond minimal functionality:
 
 ### Memory Operations
+
 - **`MTL::BlitCommandEncoder`** - Copy/convert/synchronize
   - `copyFromBuffer(src, srcOffset, dst, dstOffset, size)` - Buffer copy
   - `copyFromTexture(src, ...)` to texture/buffer - Texture operations
@@ -148,6 +157,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Essential for data transfer CPU↔GPU and GPU↔GPU.
 
 ### Texture Sampling
+
 - **`MTL::SamplerState`** - Texture sampling configuration
   - Created via `device.newSamplerState(descriptor)`
 
@@ -162,6 +172,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Required for any texture reading in shaders.
 
 ### Depth/Stencil Testing
+
 - **`MTL::DepthStencilState`** - Depth/stencil test configuration
   - Created via `device.newDepthStencilState(descriptor)`
 
@@ -179,6 +190,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Standard for 3D rendering with depth sorting.
 
 ### Vertex Input
+
 - **`MTL::VertexDescriptor`** - Vertex layout specification
   - `layouts` - Buffer stride/step configuration
   - `attributes` - Attribute format/offset
@@ -196,6 +208,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Defines vertex structure for rendering.
 
 ### Memory Management
+
 - **`MTL::Heap`** - Suballocator for resources
   - `newBuffer(length, options)` - Allocate from heap
   - `newTexture(descriptor)` - Allocate from heap
@@ -210,6 +223,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Better memory efficiency for many small allocations.
 
 ### Display Integration
+
 - **`CA::MetalLayer`** (QuartzCore) - Native display surface
   - `nextDrawable()` - Get drawable for current frame
   - `device` - GPU to use
@@ -227,6 +241,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Required for any on-screen rendering.
 
 ### Synchronization
+
 - **`MTL::Fence`** - Coarse-grained synchronization
   - Used with encoder methods: `updateFence()`, `waitForFence()`
   - Coordinates work between encoders in same command buffer
@@ -234,6 +249,7 @@ Enables practical applications beyond minimal functionality:
 **Why recommended**: Enables complex multi-pass rendering.
 
 ### Resource Configuration
+
 - **`MTL::TextureDescriptor`** - Texture creation parameters
   - `texture2DDescriptor(format, width, height, mipmapped)` - Common 2D
   - `textureCubeDescriptor(format, size, mipmapped)` - Cubemap
@@ -250,6 +266,7 @@ Enables practical applications beyond minimal functionality:
 Specialized capabilities for advanced use cases:
 
 ### Ray Tracing
+
 - **`MTL::AccelerationStructure`** - BVH for ray tracing
 - **`MTL::AccelerationStructureDescriptor`** - BVH configuration
 - **`MTL::PrimitiveAccelerationStructureDescriptor`** - Geometry BVH
@@ -260,6 +277,7 @@ Specialized capabilities for advanced use cases:
 **Why optional**: Ray tracing is cutting-edge, smaller audience.
 
 ### GPU-Driven Rendering
+
 - **`MTL::IndirectCommandBuffer`** - GPU-generated commands
 - **`MTL::IndirectCommandBufferDescriptor`** - Configuration
 - **`MTL::IndirectRenderCommand`** - GPU-authored draw
@@ -267,24 +285,28 @@ Specialized capabilities for advanced use cases:
 **Why optional**: Advanced optimization for expert users.
 
 ### Dynamic Linking
+
 - **`MTL::DynamicLibrary`** - Runtime-loaded shaders
 - **`MTL::BinaryArchive`** - Cached pipeline compilation
 
 **Why optional**: Complex shader management, limited use cases.
 
 ### Event System
+
 - **`MTL::Event`** - Fine-grained synchronization
 - **`MTL::SharedEvent`** - Cross-process sync
 
 **Why optional**: Advanced scheduling, most users don't need.
 
 ### Argument Buffers
+
 - **`MTL::ArgumentEncoder`** - Indirect resource binding
 - **`MTL::ArgumentDescriptor`** - Argument layout
 
 **Why optional**: Performance optimization, adds complexity.
 
 ### Debugging/Profiling
+
 - **`MTL::CaptureManager`** - GPU frame capture
 - **`MTL::CaptureScope`** - Delimit capture regions
 - **`MTL::CounterSet`** - Performance counters
@@ -296,6 +318,7 @@ Specialized capabilities for advanced use cases:
 ## Critical Enumerations and Types
 
 ### Must Wrap
+
 ```cpp
 // Resource configuration
 MTL::StorageMode (Shared, Managed, Private, Memoryless)
@@ -347,6 +370,7 @@ MTL::CullMode (None, Front, Back)
 ```
 
 ### Utility Structures
+
 ```cpp
 MTL::Origin (x, y, z)
 MTL::Size (width, height, depth)
@@ -371,6 +395,7 @@ NS::AutoreleasePool - Memory management in tight loops
 ```
 
 **Recommendation**: Create minimal Python bridges that convert:
+
 - `NS::String` ↔ Python `str`
 - `NS::Error` → Python exception
 - `NS::Array` → Python `list` or generator
@@ -381,6 +406,7 @@ NS::AutoreleasePool - Memory management in tight loops
 ## Nanobind Wrapping Strategy
 
 ### 1. Class Hierarchy
+
 Metal uses reference-counted objects. Nanobind's `nb::class_<T>` with custom holders:
 
 ```cpp
@@ -392,6 +418,7 @@ nb::class_<MTL::Device>(m, "Device")
 ```
 
 ### 2. Enum Wrapping
+
 Use `nb::enum_<T>`:
 
 ```cpp
@@ -401,6 +428,7 @@ nb::enum_<MTL::PixelFormat>(m, "PixelFormat")
 ```
 
 ### 3. Buffer Protocol
+
 Expose `MTL::Buffer` contents as Python buffer protocol (e.g., numpy arrays):
 
 ```cpp
@@ -414,6 +442,7 @@ Expose `MTL::Buffer` contents as Python buffer protocol (e.g., numpy arrays):
 ```
 
 ### 4. Resource Lifetime
+
 Metal uses retain/release. Nanobind needs custom holder or intrusive_ptr support:
 
 ```cpp
@@ -428,6 +457,7 @@ namespace nanobind::detail {
 ```
 
 ### 5. Callback Handling
+
 For completion handlers, use `nb::cpp_function`:
 
 ```cpp
@@ -444,7 +474,9 @@ For completion handlers, use `nb::cpp_function`:
 ## Recommended Phased Implementation
 
 ### Phase 1: Minimal Compute (Week 1)
+
 Enable basic GPU compute:
+
 - `MTL::Device` (creation + basic methods)
 - `MTL::CommandQueue`, `MTL::CommandBuffer`
 - `MTL::Buffer` (with buffer protocol)
@@ -456,7 +488,9 @@ Enable basic GPU compute:
 **Validation**: Run a simple kernel that squares an array.
 
 ### Phase 2: Rendering Basics (Week 2-3)
+
 Add graphics pipeline:
+
 - `MTL::Texture`, `MTL::TextureDescriptor`
 - `MTL::SamplerState`, `MTL::SamplerDescriptor`
 - `MTL::RenderPipelineState`, `MTL::RenderPipelineDescriptor`
@@ -469,7 +503,9 @@ Add graphics pipeline:
 **Validation**: Render a colored triangle to a window.
 
 ### Phase 3: Depth/Stencil & Utilities (Week 4)
+
 Complete common rendering:
+
 - `MTL::DepthStencilState`, `MTL::DepthStencilDescriptor`
 - `MTL::BlitCommandEncoder`
 - `MTL::Fence`
@@ -479,7 +515,9 @@ Complete common rendering:
 **Validation**: 3D scene with depth testing and texture mapping.
 
 ### Phase 4: Advanced (Ongoing)
+
 Per-demand features:
+
 - Ray tracing structures
 - Indirect command buffers
 - Argument encoders
@@ -492,6 +530,7 @@ Per-demand features:
 ### Pythonic Patterns
 
 **Resource Management**:
+
 ```python
 # Use context managers
 with device.new_command_queue() as queue:
@@ -501,6 +540,7 @@ with device.new_command_queue() as queue:
 ```
 
 **Buffer Access**:
+
 ```python
 # NumPy integration
 import numpy as np
@@ -510,6 +550,7 @@ array[:] = [1, 2, 3, 4]
 ```
 
 **Enum Access**:
+
 ```python
 # Attribute-style access
 from pymetal import PixelFormat
@@ -517,12 +558,14 @@ texture = device.new_texture(format=PixelFormat.RGBA8Unorm, ...)
 ```
 
 **Callback Simplicity**:
+
 ```python
 # Simple Python callbacks
 cmd_buffer.add_completed_handler(lambda buf: print("Done!"))
 ```
 
 ### Error Handling
+
 Convert `NS::Error` to Python exceptions:
 
 ```python
@@ -532,6 +575,7 @@ class MetalResourceError(MetalError): pass
 ```
 
 ### Documentation
+
 Docstrings with type hints:
 
 ```python
@@ -555,21 +599,27 @@ def new_buffer(self, length: int, options: ResourceOptions) -> Buffer:
 ## Testing Strategy
 
 ### Unit Tests
+
 Per-class validation:
+
 - Device creation/enumeration
 - Buffer allocation/access
 - Shader compilation
 - Pipeline creation
 
 ### Integration Tests
+
 Complete workflows:
+
 - Compute kernel execution
 - Triangle rendering
 - Texture upload/download
 - Multi-pass rendering
 
 ### Example Code
+
 Maintain runnable examples:
+
 - `examples/01_device_info.py` - List GPUs
 - `examples/02_compute_add.py` - Vector addition
 - `examples/03_render_triangle.py` - Basic rendering
@@ -580,14 +630,17 @@ Maintain runnable examples:
 ## Performance Considerations
 
 ### Zero-Copy Where Possible
+
 - Buffer protocol for `MTL::Buffer::contents()`
 - Avoid unnecessary Python↔C++ conversions
 
 ### Batch Operations
+
 - Expose `setBuffers(list)` for binding multiple buffers
 - `setTextures(list)` for multiple textures
 
 ### GIL Management
+
 - Release GIL during:
   - Command buffer commit
   - Wait operations
@@ -595,6 +648,7 @@ Maintain runnable examples:
 - Acquire GIL only for callbacks
 
 ### Memory Efficiency
+
 - Use weak references for encoder↔command buffer
 - Proper retain/release for Metal objects
 - Avoid creating temporary Python objects in hot paths
@@ -604,35 +658,43 @@ Maintain runnable examples:
 ## Challenges and Solutions
 
 ### Challenge 1: Objective-C Blocks
+
 Metal uses Objective-C blocks for callbacks (`^{ ... }`).
 
 **Solution**: Create C++ lambda wrappers that capture Python callables, manage GIL.
 
 ### Challenge 2: Reference Counting
+
 Metal uses `NS::Object` retain/release semantics.
 
 **Solution**: Nanobind intrusive_ptr or custom holder with `retain()`/`release()` calls.
 
 ### Challenge 3: Metal Shader Language (MSL)
+
 Shaders are strings compiled at runtime.
 
 **Solution**:
+
 - Provide MSL as Python strings
 - Consider `.metal` file loading utilities
 - Future: Python shader DSL (like Taichi/Warp)
 
 ### Challenge 4: Platform Lock-in
+
 Metal is macOS/iOS only.
 
 **Solution**:
+
 - Clear documentation about platform requirements
 - Consider future: stub API for cross-platform testing
 - Potential: Wrap MoltenVK for Vulkan fallback
 
 ### Challenge 5: Type Safety
+
 Many Metal APIs use void pointers and indices.
 
 **Solution**:
+
 - Strong typing in Python API
 - Runtime validation of buffer bindings
 - Clear error messages

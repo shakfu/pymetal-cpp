@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1]
+
 ### Added
 - Makefile commands for code quality tools:
   - `make lint` / `make lint-fix` - ruff linting
@@ -20,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Lint issues in test files (unused variables, boolean comparisons)
 
-## [0.1.0] - 2025-01-XX
+## [0.1.0]
 
 ### Added
 - Initial release of PyMetal
@@ -53,5 +55,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example programs demonstrating all features
 - Comprehensive test suite (41 tests)
 
-[Unreleased]: https://github.com/shakfu/pymetal/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/shakfu/pymetal/releases/tag/v0.1.0
+[Unreleased]: https://github.com/shakfu/pymetal-cpp/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/shakfu/pymetal-cpp/releases/tag/v0.1.0
