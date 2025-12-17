@@ -58,6 +58,13 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/src/pymetal/__init__.pyi
     ${CMAKE_SOURCE_DIR}/src/pymetal/exceptions.py
     ${CMAKE_SOURCE_DIR}/src/pymetal/py.typed
+    # Namespace organization modules
+    ${CMAKE_SOURCE_DIR}/src/pymetal/enums.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/types.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/compute.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/graphics.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/advanced.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/shader.py
     DESTINATION pymetal
 )
 

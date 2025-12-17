@@ -21,14 +21,17 @@ PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https:
 - **Direct Metal Access**: Full control over GPU resources, not a high-level abstraction
 - **Zero-Copy NumPy Integration**: Efficient data transfer between Python and GPU
 - **Complete API Coverage**: Compute, graphics, advanced synchronization, and debugging
+- **Multi-Device Support**: Enumerate and select from all available GPUs
+- **Shader Preprocessing**: `#include`, `#define`, templates for shader development
 - **Educational**: Clear examples showing GPU programming concepts
 - **Performant**: Properly releases GIL for multithreaded Python applications
+- **Type Hints**: Full `.pyi` stub file for IDE support
 
 ## Features
 
 ### Core Capabilities
 
-#### Phase 1: Compute Pipeline [x]
+#### Compute Pipeline
 
 - Device management and command queues
 - Buffer allocation and management
@@ -37,7 +40,7 @@ PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https:
 - Thread group configuration and dispatch
 - Zero-copy NumPy buffer integration
 
-#### Phase 2: Graphics Pipeline [x]
+#### Graphics Pipeline
 
 - **Core Graphics**:
   - Texture creation and management
@@ -54,7 +57,7 @@ PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https:
   - Fence synchronization
   - Metal layer integration for display
 
-#### Phase 3: Advanced Features [x]
+#### Advanced Features
 
 - **Event system** for fine-grained synchronization
 - **Shared events** for cross-process coordination
@@ -63,14 +66,8 @@ PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https:
 - **Binary archives** for pipeline caching
 - **Capture scopes** for Xcode GPU debugging integration
 
-#### Phase 4: Ray Tracing (Planned)
 
-- Ray tracing acceleration structures
-- Ray tracing pipelines
-- Intersection function tables
-- Primitive acceleration structures
-
-*Note: Ray tracing support can be added on-demand. Current implementation focuses on compute and rasterization.*
+*Note:* ray tracing support may be added in the future.
 
 ### Performance Characteristics
 
@@ -90,7 +87,7 @@ PyMetal achieves realistic GPU performance on Apple Silicon:
 ### Requirements
 
 - macOS 11.0+ (Big Sur or later)
-- Python 3.12+
+- Python 3.9+
 - Xcode Command Line Tools
 - Metal-compatible GPU (all modern Macs)
 
@@ -264,6 +261,15 @@ device = pm.create_system_default_device()
 # Device properties
 print(device.name)
 print(device.max_threads_per_threadgroup)
+
+# Enumerate all GPUs (multi-device support)
+devices = pm.copy_all_devices()
+for d in devices:
+    print(f"{d.name}: low_power={d.is_low_power}, unified={d.has_unified_memory}")
+
+# Select a specific GPU (e.g., discrete GPU for heavy workloads)
+discrete_gpus = [d for d in devices if not d.is_low_power]
+device = discrete_gpus[0] if discrete_gpus else devices[0]
 ```
 
 ### Memory Management
@@ -306,6 +312,44 @@ render_desc = pm.RenderPipelineDescriptor.render_pipeline_descriptor()
 render_desc.vertex_function = vertex_function
 render_desc.fragment_function = fragment_function
 render_pipeline = device.new_render_pipeline_state(render_desc)
+```
+
+### Shader Preprocessing
+
+```python
+from pymetal.shader import ShaderPreprocessor, ShaderTemplate, create_compute_kernel
+
+# Preprocessor with #define and #include support
+preprocessor = ShaderPreprocessor()
+preprocessor.add_include_path("./shaders")
+preprocessor.define("BLOCK_SIZE", "256")
+preprocessor.define("USE_FAST_MATH")
+
+source = preprocessor.process('''
+    #include "common.metal"
+    #ifdef USE_FAST_MATH
+    // Fast math enabled
+    #endif
+    kernel void my_kernel(...) {
+        int size = BLOCK_SIZE;  // Becomes 256
+    }
+''')
+
+# Templates for parameterized shaders
+template = ShaderTemplate('''
+    kernel void {name}(device {dtype}* data [[buffer(0)]],
+                       uint idx [[thread_position_in_grid]]) {{
+        data[idx] = data[idx] {operation};
+    }}
+''')
+source = template.render(name="double_values", dtype="float", operation="* 2.0")
+
+# Quick kernel generation helper
+source = create_compute_kernel(
+    name="vector_add",
+    body="c[idx] = a[idx] + b[idx];",
+    buffers=[("a", "float", "read"), ("b", "float", "read"), ("c", "float", "write")]
+)
 ```
 
 ### Command Execution
@@ -459,17 +503,31 @@ pymetal-cpp/
 ├── src/
 │   ├── _pymetal.cpp           # Main C++ bindings
 │   └── pymetal/
-│       └── __init__.py        # Python module exports
+│       ├── __init__.py        # Python module exports
+│       ├── __init__.pyi       # Type stubs for IDE support
+│       ├── exceptions.py      # Custom exception hierarchy
+│       ├── enums.py           # Enumeration submodule
+│       ├── types.py           # Utility types submodule
+│       ├── compute.py         # Compute pipeline submodule
+│       ├── graphics.py        # Graphics pipeline submodule
+│       ├── advanced.py        # Advanced features submodule
+│       └── shader.py          # Shader preprocessing utilities
+├── docs/
+│   └── THREAD_SAFETY.md       # Thread safety documentation
 ├── examples/                  # 6 practical examples
 │   ├── 01_image_blur.py
 │   ├── 02_matrix_multiply_*.py
 │   ├── 03_triangle_rendering.py
 │   └── 04_advanced_features.py
-├── tests/                     # 41 unit tests
+├── tests/                     # 110 unit tests
 │   ├── test_phase1_compute.py
 │   ├── test_phase2_graphics.py
 │   ├── test_phase2_advanced.py
-│   └── test_phase3_advanced.py
+│   ├── test_phase3_advanced.py
+│   ├── test_validation.py     # Exception and validation tests
+│   ├── test_benchmarks.py     # Performance regression tests
+│   ├── test_edge_cases.py     # Boundary condition tests
+│   └── test_new_features.py   # Submodules, multi-device, shader tests
 ├── thirdparty/
 │   └── metal-cpp/             # Apple's Metal C++ headers
 ├── CMakeLists.txt             # Build configuration
@@ -487,17 +545,22 @@ make test
 pytest
 ```
 
-All 41 tests cover:
+All 110 tests cover:
 
 - Device and buffer management
 - Compute pipeline execution
 - Graphics pipeline rendering
 - Advanced features (events, capture scopes, etc.)
 - Memory management and synchronization
+- Custom exception hierarchy and validation
+- Performance regression benchmarks
+- Edge cases and boundary conditions
+- Multi-device enumeration
+- Shader preprocessing utilities
 
 ## Roadmap / Future Work
 
-### Potential Phase 4 Features (On-Demand)
+### Potential Features (On-Demand)
 
 **Ray Tracing Support:**
 
@@ -513,20 +576,20 @@ All 41 tests cover:
 - [ ] Indirect argument buffers
 - [ ] Metal Performance Shaders (MPS) integration
 - [ ] Async compute and graphics overlap
-- [ ] Multi-GPU support
+- [x] Multi-GPU support (copy_all_devices, device selection properties)
 
 **Tooling:**
 
-- [ ] Shader debugging utilities
+- [x] Shader preprocessing utilities (ShaderPreprocessor, ShaderTemplate)
 - [ ] Performance profiling helpers
 - [ ] Memory leak detection
 - [ ] Automatic optimization suggestions
 
 **Language Bindings:**
 
-- [ ] Type stubs for better IDE support
+- [x] Type stubs for better IDE support (pymetal/__init__.pyi)
 - [ ] Documentation generator from C++ comments
-- [ ] Additional high-level abstractions
+- [x] Organized namespace (pymetal.enums, pymetal.compute, etc.)
 
 These features can be implemented as needed. Contributions welcome!
 

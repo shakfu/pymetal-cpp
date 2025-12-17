@@ -444,6 +444,41 @@ class Device:
         """Maximum threads per threadgroup (width, height, depth)."""
         ...
 
+    @property
+    def is_low_power(self) -> bool:
+        """True if this is a low-power (integrated) GPU."""
+        ...
+
+    @property
+    def is_headless(self) -> bool:
+        """True if this device has no display attached."""
+        ...
+
+    @property
+    def is_removable(self) -> bool:
+        """True if this is an external/removable GPU (eGPU)."""
+        ...
+
+    @property
+    def has_unified_memory(self) -> bool:
+        """True if CPU and GPU share the same memory."""
+        ...
+
+    @property
+    def registry_id(self) -> int:
+        """Unique identifier for this GPU in the IORegistry."""
+        ...
+
+    @property
+    def recommended_max_working_set_size(self) -> int:
+        """Recommended maximum memory working set size in bytes."""
+        ...
+
+    @property
+    def max_buffer_length(self) -> int:
+        """Maximum buffer size in bytes that can be allocated."""
+        ...
+
     def new_command_queue(self) -> CommandQueue:
         """Create a new command queue."""
         ...
@@ -528,6 +563,14 @@ class Device:
 
 def create_system_default_device() -> Device:
     """Get the default Metal device."""
+    ...
+
+def copy_all_devices() -> list[Device]:
+    """Get a list of all available Metal devices.
+
+    Returns all Metal-capable GPUs on the system. On macOS, this includes
+    discrete and integrated GPUs. Useful for multi-GPU workloads.
+    """
     ...
 
 class CommandQueue:
@@ -1770,3 +1813,15 @@ class CaptureManager:
 def shared_capture_manager() -> CaptureManager:
     """Get the shared capture manager instance."""
     ...
+
+# =============================================================================
+# Submodules
+# =============================================================================
+
+# Organized namespace access - these modules re-export types for cleaner imports
+from . import enums as enums
+from . import types as types
+from . import compute as compute
+from . import graphics as graphics
+from . import advanced as advanced
+from . import shader as shader

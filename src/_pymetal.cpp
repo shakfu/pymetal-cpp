@@ -284,6 +284,56 @@ void wrap_device(nb::module_& m) {
             "Maximum threads per threadgroup as (width, height, depth) tuple.\n\n"
             "The product of dimensions must not exceed this limit.")
 
+        // Device properties for multi-device selection
+        .def_prop_ro("is_low_power",
+            [](MTL::Device* self) {
+                return self->lowPower();
+            },
+            "True if this is a low-power (integrated) GPU.\n\n"
+            "Low-power GPUs are typically more energy efficient but less performant.\n"
+            "Use this to select discrete GPUs for heavy workloads.")
+
+        .def_prop_ro("is_headless",
+            [](MTL::Device* self) {
+                return self->headless();
+            },
+            "True if this device has no display attached.\n\n"
+            "Headless GPUs can be used for compute but not display output.")
+
+        .def_prop_ro("is_removable",
+            [](MTL::Device* self) {
+                return self->removable();
+            },
+            "True if this is an external/removable GPU (eGPU).\n\n"
+            "External GPUs may be disconnected during operation.")
+
+        .def_prop_ro("has_unified_memory",
+            [](MTL::Device* self) {
+                return self->hasUnifiedMemory();
+            },
+            "True if CPU and GPU share the same memory.\n\n"
+            "Apple Silicon Macs have unified memory, enabling zero-copy buffer access.")
+
+        .def_prop_ro("registry_id",
+            [](MTL::Device* self) {
+                return self->registryID();
+            },
+            "Unique identifier for this GPU in the IORegistry.\n\n"
+            "Useful for persisting device selection across sessions.")
+
+        .def_prop_ro("recommended_max_working_set_size",
+            [](MTL::Device* self) {
+                return self->recommendedMaxWorkingSetSize();
+            },
+            "Recommended maximum memory working set size in bytes.\n\n"
+            "Exceeding this may cause performance degradation due to paging.")
+
+        .def_prop_ro("max_buffer_length",
+            [](MTL::Device* self) {
+                return self->maxBufferLength();
+            },
+            "Maximum buffer size in bytes that can be allocated.")
+
         // Phase 2: Texture methods
         .def("new_texture",
             [](MTL::Device* self, MTL::TextureDescriptor* descriptor) {
@@ -408,7 +458,43 @@ void wrap_device(nb::module_& m) {
             return MTL::CreateSystemDefaultDevice();
         },
         nb::rv_policy::reference,
-        "Create the default Metal device");
+        "Create the default Metal device.\n\n"
+        "Returns:\n"
+        "    Device: The system's default Metal device.\n\n"
+        "Note:\n"
+        "    On most systems, this returns the primary GPU. Use copy_all_devices()\n"
+        "    to enumerate all available GPUs.");
+
+    // Global function to enumerate all devices (macOS only)
+    m.def("copy_all_devices",
+        []() {
+            nb::list devices;
+            NS::Array* deviceArray = MTL::CopyAllDevices();
+            if (deviceArray) {
+                for (NS::UInteger i = 0; i < deviceArray->count(); i++) {
+                    MTL::Device* device = static_cast<MTL::Device*>(deviceArray->object(i));
+                    device->retain();  // Prevent release when array is released
+                    devices.append(nb::cast(device, nb::rv_policy::reference));
+                }
+                deviceArray->release();
+            }
+            return devices;
+        },
+        "Get a list of all available Metal devices.\n\n"
+        "Returns:\n"
+        "    list[Device]: List of all Metal-capable GPUs on the system.\n\n"
+        "Note:\n"
+        "    On macOS, this returns all discrete and integrated GPUs.\n"
+        "    On iOS/iPadOS, this is equivalent to create_system_default_device().\n\n"
+        "Example:\n"
+        "    devices = pm.copy_all_devices()\n"
+        "    for device in devices:\n"
+        "        print(f'{device.name}: {device.is_low_power}')\n"
+        "    \n"
+        "    # Select a specific device\n"
+        "    discrete_gpus = [d for d in devices if not d.is_low_power]\n"
+        "    if discrete_gpus:\n"
+        "        device = discrete_gpus[0]");
 }
 
 // ============================================================================

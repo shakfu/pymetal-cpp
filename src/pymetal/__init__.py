@@ -3,6 +3,14 @@ pymetal - Python bindings for Apple's Metal GPU API
 
 This package provides Python bindings to Metal via metal-cpp and nanobind,
 enabling GPU compute and graphics programming from Python.
+
+Submodules:
+    pymetal.enums - All enumeration types
+    pymetal.types - Utility types (Origin, Size, Range, ClearColor)
+    pymetal.compute - Compute pipeline classes
+    pymetal.graphics - Graphics/render pipeline classes
+    pymetal.advanced - Advanced features (events, indirect commands, etc.)
+    pymetal.shader - Shader preprocessing utilities
 """
 
 from .exceptions import (
@@ -17,6 +25,7 @@ from ._pymetal import (
     # Device management
     Device,
     create_system_default_device,
+    copy_all_devices,
     # Command submission
     CommandQueue,
     CommandBuffer,
@@ -130,9 +139,24 @@ from ._pymetal import (
     IndirectCommandTypeDrawIndexedPatches,
 )
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
+
+# Import submodules for namespace organization
+from . import enums
+from . import types
+from . import compute
+from . import graphics
+from . import advanced
+from . import shader
 
 __all__ = [
+    # Submodules
+    "enums",
+    "types",
+    "compute",
+    "graphics",
+    "advanced",
+    "shader",
     # Exceptions
     "MetalError",
     "CompileError",
@@ -142,6 +166,7 @@ __all__ = [
     # Device management
     "Device",
     "create_system_default_device",
+    "copy_all_devices",
     # Command submission
     "CommandQueue",
     "CommandBuffer",

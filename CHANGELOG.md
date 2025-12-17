@@ -5,7 +5,9 @@ All notable changes to PyMetal will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [unrelease]
+
+## [0.1.4]
 
 ### Added
 - **Custom Exception Hierarchy**
@@ -42,9 +44,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **API Docstrings**
   - Detailed docstrings for Device, CommandQueue, CommandBuffer, Buffer, ComputeCommandEncoder
   - Thread safety notes in class documentation
+- **Namespace Organization** (submodules for cleaner imports)
+  - `pymetal.enums` - All enumeration types
+  - `pymetal.types` - Utility types (Origin, Size, Range, ClearColor)
+  - `pymetal.compute` - Compute pipeline classes
+  - `pymetal.graphics` - Graphics/render pipeline classes
+  - `pymetal.advanced` - Advanced features (events, indirect commands, etc.)
+  - `pymetal.shader` - Shader preprocessing utilities
+- **Multi-Device Enumeration**
+  - `copy_all_devices()` - Get all available Metal GPUs
+  - New Device properties: `is_low_power`, `is_headless`, `is_removable`, `has_unified_memory`, `registry_id`, `recommended_max_working_set_size`, `max_buffer_length`
+- **Shader Preprocessing Utilities** (`pymetal.shader`)
+  - `ShaderPreprocessor` - #include, #define, #ifdef/#ifndef support
+  - `ShaderTemplate` - Template-based shader generation
+  - `create_compute_kernel()` - Helper for generating compute kernels
+  - `compute_shader_hash()` - For shader caching
 
 ### Changed
-- Test suite expanded from 41 to 84 tests
+- Test suite expanded from 41 to 110 tests
 - Project status upgraded from BETA to STABLE
 
 ## [0.1.3]
