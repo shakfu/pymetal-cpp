@@ -2,7 +2,7 @@
 
 Python bindings for Apple's Metal GPU API, enabling high-performance GPU computing and graphics programming from Python.
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)](https://www.apple.com/macos/)
 [![Metal](https://img.shields.io/badge/Metal-3.0+-orange.svg)](https://developer.apple.com/metal/)
 
@@ -65,7 +65,6 @@ PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https:
 - **Indirect command buffers** for GPU-driven rendering
 - **Binary archives** for pipeline caching
 - **Capture scopes** for Xcode GPU debugging integration
-
 
 *Note:* ray tracing support may be added in the future.
 
@@ -587,7 +586,7 @@ All 110 tests cover:
 
 **Language Bindings:**
 
-- [x] Type stubs for better IDE support (pymetal/__init__.pyi)
+- [x] Type stubs for better IDE support (`pymetal/__init__.pyi`)
 - [ ] Documentation generator from C++ comments
 - [x] Organized namespace (pymetal.enums, pymetal.compute, etc.)
 

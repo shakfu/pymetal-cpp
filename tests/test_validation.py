@@ -121,7 +121,9 @@ class TestValidationError:
         with pytest.raises(pm.ValidationError) as exc_info:
             encoder.dispatch_threadgroups(0, 1, 1, 1, 1, 1)
 
-        assert "0" in str(exc_info.value) or "greater than" in str(exc_info.value).lower()
+        assert (
+            "0" in str(exc_info.value) or "greater than" in str(exc_info.value).lower()
+        )
         encoder.end_encoding()
 
     def test_zero_threads_per_group(self, device, queue, simple_pipeline):
@@ -137,7 +139,9 @@ class TestValidationError:
 
         encoder.end_encoding()
 
-    def test_validation_error_caught_as_metal_error(self, device, queue, simple_pipeline):
+    def test_validation_error_caught_as_metal_error(
+        self, device, queue, simple_pipeline
+    ):
         """ValidationError should be catchable as MetalError."""
         buffer = device.new_buffer(1024, pm.ResourceStorageModeShared)
         cmd_buffer = queue.command_buffer()

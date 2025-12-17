@@ -5,7 +5,7 @@ This directory contains practical examples demonstrating PyMetal's capabilities 
 ## Requirements
 
 - macOS with Metal-compatible GPU
-- Python 3.12+
+- Python 3.9+
 - NumPy
 - SciPy (for example 01 only)
 

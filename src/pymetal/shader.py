@@ -8,7 +8,6 @@ This module provides utilities for preprocessing Metal shaders:
 - Shader caching and validation
 """
 
-import os
 import re
 import hashlib
 from pathlib import Path
@@ -42,11 +41,11 @@ class ShaderPreprocessor:
 
     # Regex patterns for preprocessing directives
     _INCLUDE_PATTERN = re.compile(r'^\s*#include\s*[<"]([^>"]+)[>"]\s*$', re.MULTILINE)
-    _DEFINE_PATTERN = re.compile(r'^\s*#define\s+(\w+)(?:\s+(.*))?$', re.MULTILINE)
-    _IFDEF_PATTERN = re.compile(r'^\s*#ifdef\s+(\w+)\s*$', re.MULTILINE)
-    _IFNDEF_PATTERN = re.compile(r'^\s*#ifndef\s+(\w+)\s*$', re.MULTILINE)
-    _ELSE_PATTERN = re.compile(r'^\s*#else\s*$', re.MULTILINE)
-    _ENDIF_PATTERN = re.compile(r'^\s*#endif\s*$', re.MULTILINE)
+    _DEFINE_PATTERN = re.compile(r"^\s*#define\s+(\w+)(?:\s+(.*))?$", re.MULTILINE)
+    _IFDEF_PATTERN = re.compile(r"^\s*#ifdef\s+(\w+)\s*$", re.MULTILINE)
+    _IFNDEF_PATTERN = re.compile(r"^\s*#ifndef\s+(\w+)\s*$", re.MULTILINE)
+    _ELSE_PATTERN = re.compile(r"^\s*#else\s*$", re.MULTILINE)
+    _ENDIF_PATTERN = re.compile(r"^\s*#endif\s*$", re.MULTILINE)
 
     def __init__(self, include_paths: Optional[List[Union[str, Path]]] = None):
         """
@@ -148,7 +147,9 @@ class ShaderPreprocessor:
         self._macro_functions[name] = func
         return self
 
-    def _resolve_include(self, filename: str, current_file: Optional[Path] = None) -> str:
+    def _resolve_include(
+        self, filename: str, current_file: Optional[Path] = None
+    ) -> str:
         """
         Resolve an include directive and return the file contents.
 
@@ -199,7 +200,9 @@ class ShaderPreprocessor:
             Source with includes expanded.
         """
         if depth > 50:
-            raise RecursionError("Include depth exceeded 50 - possible circular include")
+            raise RecursionError(
+                "Include depth exceeded 50 - possible circular include"
+            )
 
         def replace_include(match: re.Match) -> str:
             filename = match.group(1)
@@ -251,13 +254,13 @@ class ShaderPreprocessor:
         for name in sorted(local_defines.keys(), key=len, reverse=True):
             value = local_defines[name]
             # Use word boundaries to avoid partial replacements
-            pattern = r'\b' + re.escape(name) + r'\b'
+            pattern = r"\b" + re.escape(name) + r"\b"
             source = re.sub(pattern, value, source)
 
         # Process macro functions
         for name, func in self._macro_functions.items():
-            pattern = re.compile(rf'\b{re.escape(name)}\s*\(([^)]*)\)')
-            source = pattern.sub(lambda m: func(m.group(1)), source)
+            macro_pattern = re.compile(rf"\b{re.escape(name)}\s*\(([^)]*)\)")
+            source = macro_pattern.sub(lambda m: func(m.group(1)), source)
 
         return source
 
@@ -274,7 +277,7 @@ class ShaderPreprocessor:
         Returns:
             Source with conditionals resolved.
         """
-        lines = source.split('\n')
+        lines = source.split("\n")
         result = []
         skip_until_endif = False
         skip_until_else = False
@@ -319,7 +322,7 @@ class ShaderPreprocessor:
             if not skip_until_else and not skip_until_endif:
                 result.append(line)
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def process(
         self,
@@ -497,7 +500,7 @@ def compute_shader_hash(source: str) -> str:
     Returns:
         SHA-256 hash as hex string.
     """
-    return hashlib.sha256(source.encode('utf-8')).hexdigest()
+    return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 
 # Common shader snippets that can be included
@@ -575,12 +578,12 @@ def create_compute_kernel(
     lines.append(f"kernel void {name}({param_str}) {{")
 
     # Indent body
-    for line in body.strip().split('\n'):
+    for line in body.strip().split("\n"):
         lines.append(f"    {line}")
 
     lines.append("}")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 __all__ = [

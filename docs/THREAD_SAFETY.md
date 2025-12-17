@@ -26,6 +26,7 @@ PyMetal follows Apple's Metal threading model. Understanding which objects are t
 ### Device
 
 The `Device` object is fully thread-safe. You can safely:
+
 - Create resources (buffers, textures, pipelines) from multiple threads
 - Create command queues from multiple threads
 - Query device properties from any thread
@@ -68,6 +69,7 @@ def submit_work():
 **Command buffers and encoders are NOT thread-safe.** Each command buffer should only be used by one thread at a time.
 
 **Unsafe pattern:**
+
 ```python
 # DON'T DO THIS - race condition!
 cmd_buffer = queue.command_buffer()
@@ -82,6 +84,7 @@ def encode_part2():
 ```
 
 **Safe pattern - separate command buffers:**
+
 ```python
 def worker():
     # Safe: Each thread has its own command buffer
@@ -102,6 +105,7 @@ threads = [threading.Thread(target=worker) for _ in range(4)]
 Buffer and texture objects themselves are thread-safe, but **you must synchronize access to their contents**:
 
 **CPU-GPU synchronization:**
+
 ```python
 # Thread 1: Write data
 buffer = device.new_buffer(1024, pm.ResourceStorageModeShared)
@@ -122,6 +126,7 @@ result = np.frombuffer(buffer.contents(), dtype=np.float32).copy()
 ```
 
 **Multi-threaded CPU access:**
+
 ```python
 import threading
 

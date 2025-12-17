@@ -1,6 +1,6 @@
 [project]
 name = "pymetal-cpp"
-version = "0.1.4"
+version = "0.1.5"
 description = "Python bindings for metal-cpp"
 readme = "README.md"
 requires-python = ">=3.9"

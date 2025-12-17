@@ -69,7 +69,9 @@ class TestBufferAllocationPerformance:
 
         ops_per_sec = num_iterations / elapsed
         mb_per_sec = (buffer_size * num_iterations) / (elapsed * 1024 * 1024)
-        print(f"\nLarge buffer allocation: {ops_per_sec:.0f} ops/sec, {mb_per_sec:.0f} MB/sec")
+        print(
+            f"\nLarge buffer allocation: {ops_per_sec:.0f} ops/sec, {mb_per_sec:.0f} MB/sec"
+        )
         # Large buffers are slower, so use a lower threshold
         assert ops_per_sec > MIN_BUFFER_ALLOC_OPS_PER_SEC / 10
 
@@ -174,7 +176,9 @@ class TestComputeKernelPerformance:
         throughput_gbps = total_bytes / (elapsed * 1e9)
         ops_per_sec = num_iterations / elapsed
 
-        print(f"\nVector add: {throughput_gbps:.2f} GB/s, {ops_per_sec:.0f} kernel executions/sec")
+        print(
+            f"\nVector add: {throughput_gbps:.2f} GB/s, {ops_per_sec:.0f} kernel executions/sec"
+        )
         assert throughput_gbps > MIN_COMPUTE_THROUGHPUT_GBPS, (
             f"Compute throughput too low: {throughput_gbps:.2f} GB/s "
             f"(expected > {MIN_COMPUTE_THROUGHPUT_GBPS})"

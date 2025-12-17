@@ -5,7 +5,6 @@ Tests for new features:
 - Shader preprocessing
 """
 
-import pytest
 import pymetal as pm
 
 
@@ -16,6 +15,7 @@ class TestNamespaceOrganization:
         """Test that pymetal.enums module exists."""
         assert hasattr(pm, "enums")
         from pymetal import enums
+
         assert hasattr(enums, "StorageMode")
         assert hasattr(enums, "PixelFormat")
         assert hasattr(enums, "ResourceStorageModeShared")
@@ -24,6 +24,7 @@ class TestNamespaceOrganization:
         """Test that pymetal.types module exists."""
         assert hasattr(pm, "types")
         from pymetal import types
+
         assert hasattr(types, "Origin")
         assert hasattr(types, "Size")
         assert hasattr(types, "Range")
@@ -33,6 +34,7 @@ class TestNamespaceOrganization:
         """Test that pymetal.compute module exists."""
         assert hasattr(pm, "compute")
         from pymetal import compute
+
         assert hasattr(compute, "ComputePipelineState")
         assert hasattr(compute, "ComputeCommandEncoder")
 
@@ -40,6 +42,7 @@ class TestNamespaceOrganization:
         """Test that pymetal.graphics module exists."""
         assert hasattr(pm, "graphics")
         from pymetal import graphics
+
         assert hasattr(graphics, "Texture")
         assert hasattr(graphics, "RenderPipelineState")
         assert hasattr(graphics, "SamplerState")
@@ -48,6 +51,7 @@ class TestNamespaceOrganization:
         """Test that pymetal.advanced module exists."""
         assert hasattr(pm, "advanced")
         from pymetal import advanced
+
         assert hasattr(advanced, "Event")
         assert hasattr(advanced, "Heap")
         assert hasattr(advanced, "BlitCommandEncoder")
@@ -56,6 +60,7 @@ class TestNamespaceOrganization:
         """Test that pymetal.shader module exists."""
         assert hasattr(pm, "shader")
         from pymetal import shader
+
         assert hasattr(shader, "ShaderPreprocessor")
         assert hasattr(shader, "ShaderTemplate")
         assert hasattr(shader, "create_compute_kernel")
@@ -112,9 +117,9 @@ class TestMultiDeviceEnumeration:
     def test_device_selection_by_power(self):
         """Test selecting devices by power characteristics."""
         devices = pm.copy_all_devices()
-        # Filter by is_low_power property
-        low_power = [d for d in devices if d.is_low_power]
-        high_power = [d for d in devices if not d.is_low_power]
+        # Filter by is_low_power property - verify it works without error
+        _ = [d for d in devices if d.is_low_power]
+        _ = [d for d in devices if not d.is_low_power]
         # At least the default device should exist
         assert len(devices) >= 1
 
@@ -125,12 +130,14 @@ class TestShaderPreprocessor:
     def test_preprocessor_creation(self):
         """Test creating a ShaderPreprocessor."""
         from pymetal.shader import ShaderPreprocessor
+
         pp = ShaderPreprocessor()
         assert pp is not None
 
     def test_define_macro(self):
         """Test defining macros."""
         from pymetal.shader import ShaderPreprocessor
+
         pp = ShaderPreprocessor()
         pp.define("BLOCK_SIZE", "256")
 
@@ -147,12 +154,8 @@ class TestShaderPreprocessor:
     def test_method_chaining(self):
         """Test that methods support chaining."""
         from pymetal.shader import ShaderPreprocessor
-        pp = (
-            ShaderPreprocessor()
-            .define("A", "1")
-            .define("B", "2")
-            .define("C", "3")
-        )
+
+        pp = ShaderPreprocessor().define("A", "1").define("B", "2").define("C", "3")
         source = "A + B + C"
         processed = pp.process(source, process_includes=False)
         assert "1 + 2 + 3" in processed
@@ -160,6 +163,7 @@ class TestShaderPreprocessor:
     def test_conditional_ifdef(self):
         """Test #ifdef preprocessing."""
         from pymetal.shader import ShaderPreprocessor
+
         pp = ShaderPreprocessor()
         pp.define("FEATURE_ENABLED")
 
@@ -177,6 +181,7 @@ int feature = 0;
     def test_conditional_ifndef(self):
         """Test #ifndef preprocessing."""
         from pymetal.shader import ShaderPreprocessor
+
         pp = ShaderPreprocessor()
         # Don't define FEATURE_DISABLED
 
@@ -198,12 +203,14 @@ class TestShaderTemplate:
     def test_template_creation(self):
         """Test creating a ShaderTemplate."""
         from pymetal.shader import ShaderTemplate
+
         template = ShaderTemplate("kernel void {name}() {{}}")
         assert template is not None
 
     def test_template_render(self):
         """Test rendering a template."""
         from pymetal.shader import ShaderTemplate
+
         template = ShaderTemplate("kernel void {name}() {{}}")
         source = template.render(name="my_kernel")
         assert "kernel void my_kernel()" in source
@@ -211,6 +218,7 @@ class TestShaderTemplate:
     def test_template_defaults(self):
         """Test template defaults."""
         from pymetal.shader import ShaderTemplate
+
         template = ShaderTemplate("kernel void {name}(device {type}* data) {{}}")
         template.set_default("type", "float")
         source = template.render(name="my_kernel")
@@ -219,6 +227,7 @@ class TestShaderTemplate:
     def test_template_override_defaults(self):
         """Test overriding template defaults."""
         from pymetal.shader import ShaderTemplate
+
         template = ShaderTemplate("device {type}* data")
         template.set_default("type", "float")
         source = template.render(type="int")

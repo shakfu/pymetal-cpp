@@ -21,7 +21,7 @@ release:
 	@uv build --wheel --python 3.12
 
 clean:
-	rm -rf build dist src/pymetal/*.so
+	@rm -rf build dist src/pymetal/*.so
 
 test:
 	@uv run pytest tests/ -v
@@ -44,7 +44,7 @@ format-check:
 
 # Type checking (mypy)
 typecheck:
-	@.venv/bin/mypy src/
+	@uv run mypy src/
 
 # Package validation and publishing (twine)
 check:
