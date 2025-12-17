@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.5]
 
+### Added
+
+- **API Reference Documentation** (`docs/api.md`)
+  - Comprehensive guide to all classes, methods, and enums
+  - Usage examples for common patterns
+  - Thread safety summary
+
 ### Fixed
 
 - Fixed lint errors (unused imports in shader.py, test files, and type stubs)
