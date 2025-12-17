@@ -1,7 +1,8 @@
 PROJECT_NAME = pymetal
 VERSION = 0.1.0
 
-.PHONY: all build wheel clean test snap lint lint-fix format format-check typecheck check publish-test publish
+.PHONY: all build wheel clean test snap lint lint-fix format format-check \
+		typecheck check publish-test publish release
 
 all: build
 
@@ -11,6 +12,13 @@ build:
 
 wheel:
 	@uv build
+
+release:
+	@uv build --sdist
+	@uv build --wheel --python 3.9
+	@uv build --wheel --python 3.10
+	@uv build --wheel --python 3.11
+	@uv build --wheel --python 3.12
 
 clean:
 	rm -rf build dist src/pymetal/*.so
