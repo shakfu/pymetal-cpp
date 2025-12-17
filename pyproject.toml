@@ -4,35 +4,45 @@ version = "0.1.0"
 description = "Python bindings for metal-cpp"
 readme = "README.md"
 requires-python = ">=3.8"
+license = { text = "MIT" }
 authors = [
-    { name = "shakfu", email = "me@me.org" },
+    { name = "Shakeeb Alireza", email = "me@example.com" },
 ]
-keywords = ["chuck", "audio", "music", "synthesis", "live-coding"]
+keywords = ["metal", "gpu", "apple", "compute", "graphics", "macos", "nanobind", "numpy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: C++",
+    "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Hardware",
 ]
-dependencies = [
-]
+dependencies = []
 
 [dependency-groups]
 dev = [
+    "mypy>=1.14.1",
     "numpy>=1.24.4",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.21.0",
+    "ruff>=0.14.9",
     "scipy>=1.10.1",
+    "twine>=6.1.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/shakfu/pymetal"
+Repository = "https://github.com/shakfu/pymetal"
+Issues = "https://github.com/shakfu/pymetal/issues"
 
 [build-system]
 requires = ["scikit-build-core >=0.10", "nanobind >=1.3.2"]
@@ -62,4 +72,16 @@ test-skip="cp38-macosx_*:arm64"
 # Needed for full C++17 support
 [tool.cibuildwheel.macos.environment]
 MACOSX_DEPLOYMENT_TARGET = "10.14"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pymetal._pymetal",
+    "pymetal.cli.main",
+]
+ignore_missing_imports = true
 

@@ -95,7 +95,7 @@ def test_shader_compilation_error():
     """
 
     with pytest.raises(RuntimeError, match="shader compilation failed"):
-        library = device.new_library_with_source(shader_source)
+        _ = device.new_library_with_source(shader_source)
 
 
 def test_function_extraction():
@@ -191,12 +191,8 @@ def test_compute_square_array():
 
     # Dispatch
     threads_per_group = min(size, pipeline.thread_execution_width)
-    num_groups = (size + threads_per_group - 1) // threads_per_group
 
-    encoder.dispatch_threads(
-        size, 1, 1,
-        threads_per_group, 1, 1
-    )
+    encoder.dispatch_threads(size, 1, 1, threads_per_group, 1, 1)
 
     encoder.end_encoding()
 
@@ -206,7 +202,7 @@ def test_compute_square_array():
 
     # Verify results
     result = np.frombuffer(buffer.contents(), dtype=np.float32)
-    expected = input_data ** 2
+    expected = input_data**2
 
     np.testing.assert_allclose(result, expected, rtol=1e-5)
     print(f"Successfully squared {size} elements on GPU")
@@ -221,7 +217,10 @@ def test_command_buffer_status():
 
     # Initially not enqueued
     status = cmd_buffer.status
-    assert status in [pm.CommandBufferStatus.NotEnqueued, pm.CommandBufferStatus.Enqueued]
+    assert status in [
+        pm.CommandBufferStatus.NotEnqueued,
+        pm.CommandBufferStatus.Enqueued,
+    ]
 
     # After commit, should be at least committed
     cmd_buffer.commit()
@@ -276,10 +275,7 @@ def test_dispatch_threadgroups():
     threads_per_group = 64
     num_groups = size // threads_per_group
 
-    encoder.dispatch_threadgroups(
-        num_groups, 1, 1,
-        threads_per_group, 1, 1
-    )
+    encoder.dispatch_threadgroups(num_groups, 1, 1, threads_per_group, 1, 1)
 
     encoder.end_encoding()
     cmd_buffer.commit()

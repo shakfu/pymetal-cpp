@@ -20,26 +20,22 @@ def test_blit_buffer_copy():
 
     # Create source buffer with data
     src_data = np.array([1, 2, 3, 4, 5], dtype=np.uint32)
-    src_buffer = device.new_buffer(
-        src_data.nbytes,
-        pm.ResourceStorageModeShared
-    )
+    src_buffer = device.new_buffer(src_data.nbytes, pm.ResourceStorageModeShared)
     # Copy data into buffer
     np.copyto(np.frombuffer(src_buffer.contents(), dtype=np.uint32), src_data)
 
     # Create destination buffer
-    dst_buffer = device.new_buffer(
-        src_data.nbytes,
-        pm.ResourceStorageModeShared
-    )
+    dst_buffer = device.new_buffer(src_data.nbytes, pm.ResourceStorageModeShared)
 
     # Copy using blit encoder
     cmd_buffer = queue.command_buffer()
     blit_encoder = cmd_buffer.blit_command_encoder()
     blit_encoder.copy_from_buffer(
-        src_buffer, 0,  # source, offset
-        dst_buffer, 0,  # destination, offset
-        src_data.nbytes  # size
+        src_buffer,
+        0,  # source, offset
+        dst_buffer,
+        0,  # destination, offset
+        src_data.nbytes,  # size
     )
     blit_encoder.end_encoding()
 
@@ -170,17 +166,13 @@ def test_depth_render_with_depth_stencil():
 
     # Create color attachment
     color_desc = pm.TextureDescriptor.texture2d_descriptor(
-        pm.PixelFormat.RGBA8Unorm,
-        width, height,
-        False
+        pm.PixelFormat.RGBA8Unorm, width, height, False
     )
     color_texture = device.new_texture(color_desc)
 
     # Create depth attachment
     depth_desc = pm.TextureDescriptor.texture2d_descriptor(
-        pm.PixelFormat.Depth32Float,
-        width, height,
-        False
+        pm.PixelFormat.Depth32Float, width, height, False
     )
     depth_texture = device.new_texture(depth_desc)
 

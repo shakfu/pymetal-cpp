@@ -10,7 +10,6 @@ Tests cutting-edge Metal features including:
 """
 
 import pytest
-import numpy as np
 import pymetal as pm
 import tempfile
 import os
@@ -47,7 +46,7 @@ def test_shared_event_creation():
     shared_event.signaled_value = 100
     assert shared_event.signaled_value == 100
 
-    print(f"Successfully set signaled values: 42 -> 100")
+    print("Successfully set signaled values: 42 -> 100")
 
 
 def test_argument_descriptor():
@@ -68,7 +67,9 @@ def test_argument_descriptor():
     assert arg_desc.array_length == 1
     assert arg_desc.access == pm.BindingAccess.ReadOnly
 
-    print(f"Created argument descriptor: type={arg_desc.data_type}, index={arg_desc.index}")
+    print(
+        f"Created argument descriptor: type={arg_desc.data_type}, index={arg_desc.index}"
+    )
 
 
 def test_indirect_command_buffer_descriptor():
@@ -85,8 +86,8 @@ def test_indirect_command_buffer_descriptor():
 
     # Verify properties
     assert desc.command_types == pm.IndirectCommandTypeDraw
-    assert desc.inherit_buffers == False
-    assert desc.inherit_pipeline_state == True
+    assert not desc.inherit_buffers
+    assert desc.inherit_pipeline_state
     assert desc.max_vertex_buffer_bind_count == 8
 
     print(f"Created indirect command buffer descriptor: types={desc.command_types}")
@@ -198,7 +199,7 @@ def test_capture_scope_begin_end():
     # Do some work (or not)
     scope.end_scope()
 
-    print(f"Successfully began and ended capture scope")
+    print("Successfully began and ended capture scope")
 
 
 def test_capture_manager_properties():
@@ -253,10 +254,10 @@ def test_binding_access_enum():
 def test_indirect_command_type_constants():
     """Test IndirectCommandType constants."""
     # Test constants exist
-    assert hasattr(pm, 'IndirectCommandTypeDraw')
-    assert hasattr(pm, 'IndirectCommandTypeDrawIndexed')
-    assert hasattr(pm, 'IndirectCommandTypeDrawPatches')
-    assert hasattr(pm, 'IndirectCommandTypeDrawIndexedPatches')
+    assert hasattr(pm, "IndirectCommandTypeDraw")
+    assert hasattr(pm, "IndirectCommandTypeDrawIndexed")
+    assert hasattr(pm, "IndirectCommandTypeDrawPatches")
+    assert hasattr(pm, "IndirectCommandTypeDrawIndexedPatches")
 
     # Get values
     draw = pm.IndirectCommandTypeDraw
@@ -307,7 +308,7 @@ def test_complete_phase3_workflow():
     print("\n=== Phase 3 Complete Workflow ===")
 
     # 1. Create events
-    event = device.new_event()
+    _ = device.new_event()
     shared_event = device.new_shared_event()
     shared_event.signaled_value = 1
     print(f"✓ Created events (signaled value: {shared_event.signaled_value})")

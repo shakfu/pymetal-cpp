@@ -9,7 +9,6 @@ Tests basic GPU graphics functionality including:
 """
 
 import pytest
-import numpy as np
 import pymetal as pm
 
 
@@ -18,9 +17,7 @@ def test_texture_creation():
     device = pm.create_system_default_device()
 
     desc = pm.TextureDescriptor.texture2d_descriptor(
-        pm.PixelFormat.RGBA8Unorm,
-        512, 512,
-        False
+        pm.PixelFormat.RGBA8Unorm, 512, 512, False
     )
 
     texture = device.new_texture(desc)
@@ -94,9 +91,7 @@ def test_render_pass_descriptor():
 
     # Create render target texture
     tex_desc = pm.TextureDescriptor.texture2d_descriptor(
-        pm.PixelFormat.RGBA8Unorm,
-        256, 256,
-        False
+        pm.PixelFormat.RGBA8Unorm, 256, 256, False
     )
     texture = device.new_texture(tex_desc)
 
@@ -137,9 +132,7 @@ def test_offscreen_triangle_rendering():
 
     # Create render target texture
     tex_desc = pm.TextureDescriptor.texture2d_descriptor(
-        pm.PixelFormat.RGBA8Unorm,
-        width, height,
-        False
+        pm.PixelFormat.RGBA8Unorm, width, height, False
     )
     render_target = device.new_texture(tex_desc)
 
@@ -208,7 +201,9 @@ def test_offscreen_triangle_rendering():
 
     # Success - we rendered a triangle!
     print(f"Successfully rendered triangle to {width}x{height} texture")
-    print(f"Render target: {render_target.width}x{render_target.height}, format: {render_target.pixel_format}")
+    print(
+        f"Render target: {render_target.width}x{render_target.height}, format: {render_target.pixel_format}"
+    )
 
 
 def test_sampler_creation():
@@ -233,9 +228,7 @@ def test_cull_and_winding():
 
     # Create minimal render setup
     tex_desc = pm.TextureDescriptor.texture2d_descriptor(
-        pm.PixelFormat.RGBA8Unorm,
-        64, 64,
-        False
+        pm.PixelFormat.RGBA8Unorm, 64, 64, False
     )
     texture = device.new_texture(tex_desc)
 

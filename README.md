@@ -92,7 +92,7 @@ PyMetal achieves realistic GPU performance on Apple Silicon:
 ### Install from Source
 
 ```bash
-git clone https://github.com/yourusername/pymetal.git
+git clone https://github.com/shakfu/pymetal.git
 cd pymetal
 pip install -e .
 ```
