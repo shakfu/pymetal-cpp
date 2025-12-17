@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Custom Exception Hierarchy**
+  - `MetalError` - Base exception for all Metal-related errors
+  - `CompileError` - Shader compilation failures
+  - `PipelineError` - Pipeline state creation failures
+  - `ResourceError` - Resource allocation failures
+  - `ValidationError` - Input validation failures
+- **Type Stub File** (`pymetal/__init__.pyi`)
+  - Full type annotations for all 25+ enums and classes
+  - IDE support for autocompletion and type checking
+- **Input Validation**
+  - Buffer index validation (0-31 range)
+  - Texture index validation (0-31 range)
+  - Sampler index validation (0-15 range)
+  - Threadgroup dimension validation (must be > 0)
+- **Thread Safety Documentation** (`docs/THREAD_SAFETY.md`)
+  - Comprehensive guide to Metal threading model
+  - Thread-safe vs non-thread-safe object documentation
+  - Best practices and common pitfalls
+  - GIL release behavior documentation
+- **Performance Benchmark Tests** (`tests/test_benchmarks.py`)
+  - Buffer allocation throughput tests
+  - Shader compilation throughput tests
+  - Compute kernel performance tests
+  - Validation overhead tests
+- **Edge Case Tests** (`tests/test_edge_cases.py`)
+  - Minimal buffer sizes (1 byte, single float)
+  - Boundary conditions (max buffer index)
+  - Empty operations and multiple encoders
+  - Texture edge cases (1x1, non-square, non-power-of-2)
+  - Label edge cases (empty, long, unicode)
+  - Shader edge cases (minimal, many buffers, structs)
+- **API Docstrings**
+  - Detailed docstrings for Device, CommandQueue, CommandBuffer, Buffer, ComputeCommandEncoder
+  - Thread safety notes in class documentation
+
+### Changed
+- Test suite expanded from 41 to 84 tests
+- Project status upgraded from BETA to STABLE
+
 ## [0.1.3]
 
 ### Fixed
@@ -15,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2]
 
 ### Added
-  - release commands for pypi
+  - Added `release` commands for multi-python version wheel building for pypi
   
 ## [0.1.1]
 
@@ -36,14 +76,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Initial release of PyMetal
-- **Phase 1: Compute Pipeline**
+- **Compute Pipeline**
   - Device management and command queues
   - Buffer allocation and management
   - Shader compilation from Metal Shading Language source
   - Compute pipeline creation and execution
   - Thread group configuration and dispatch
   - Zero-copy NumPy buffer integration
-- **Phase 2: Graphics Pipeline**
+- **Graphics Pipeline**
   - Texture creation and management
   - Render pipeline state with vertex/fragment shaders
   - Render pass descriptors with color/depth attachments
@@ -55,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Heap-based resource allocation
   - Fence synchronization
   - Metal layer integration
-- **Phase 3: Advanced Features**
+- **Advanced Features**
   - Event system for fine-grained synchronization
   - Shared events for cross-process coordination
   - Argument buffers for efficient resource binding
@@ -65,5 +105,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example programs demonstrating all features
 - Comprehensive test suite (41 tests)
 
-[Unreleased]: https://github.com/shakfu/pymetal-cpp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/shakfu/pymetal-cpp/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/shakfu/pymetal-cpp/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/shakfu/pymetal-cpp/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/shakfu/pymetal-cpp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/shakfu/pymetal-cpp/releases/tag/v0.1.0

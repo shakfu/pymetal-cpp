@@ -94,26 +94,26 @@ PyMetal achieves realistic GPU performance on Apple Silicon:
 - Xcode Command Line Tools
 - Metal-compatible GPU (all modern Macs)
 
+### Install from pypi
+
+```sh
+pip install pymetal-cpp
+```
+
 ### Install from Source
 
-```bash
+```sh
 git clone https://github.com/shakfu/pymetal-cpp.git
 cd pymetal-cpp
 pip install -e .
 ```
 
-### Dependencies
+### Soft Dependencies
 
-PyMetal automatically installs:
+pymetal-cpp recommends to install:
 
-- `nanobind` - C++/Python bindings
 - `numpy` - Array operations
-
-For examples, you may also want:
-
-```bash
-pip install scipy  # For image blur example
-```
+- `scipy` - For image blur example
 
 ## Quick Start
 

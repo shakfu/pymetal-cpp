@@ -52,4 +52,13 @@ target_link_libraries(_pymetal
 # Install directive for scikit-build-core
 install(TARGETS _pymetal LIBRARY DESTINATION pymetal)
 
+# Install Python source files
+install(FILES
+    ${CMAKE_SOURCE_DIR}/src/pymetal/__init__.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/__init__.pyi
+    ${CMAKE_SOURCE_DIR}/src/pymetal/exceptions.py
+    ${CMAKE_SOURCE_DIR}/src/pymetal/py.typed
+    DESTINATION pymetal
+)
+
 

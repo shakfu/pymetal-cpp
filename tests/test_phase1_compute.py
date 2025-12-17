@@ -94,7 +94,7 @@ def test_shader_compilation_error():
     }
     """
 
-    with pytest.raises(RuntimeError, match="shader compilation failed"):
+    with pytest.raises(pm.CompileError, match="shader compilation failed"):
         _ = device.new_library_with_source(shader_source)
 
 

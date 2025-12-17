@@ -5,6 +5,14 @@ This package provides Python bindings to Metal via metal-cpp and nanobind,
 enabling GPU compute and graphics programming from Python.
 """
 
+from .exceptions import (
+    MetalError,
+    CompileError,
+    PipelineError,
+    ResourceError,
+    ValidationError,
+)
+
 from ._pymetal import (
     # Device management
     Device,
@@ -125,6 +133,12 @@ from ._pymetal import (
 __version__ = "0.1.3"
 
 __all__ = [
+    # Exceptions
+    "MetalError",
+    "CompileError",
+    "PipelineError",
+    "ResourceError",
+    "ValidationError",
     # Device management
     "Device",
     "create_system_default_device",

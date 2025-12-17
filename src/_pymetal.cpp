@@ -15,6 +15,91 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 // ============================================================================
+// Custom Exception Types (registered at module load)
+// ============================================================================
+
+static PyObject* MetalError = nullptr;
+static PyObject* CompileError = nullptr;
+static PyObject* PipelineError = nullptr;
+static PyObject* ResourceError = nullptr;
+static PyObject* ValidationError = nullptr;
+
+void throw_compile_error(const std::string& msg) {
+    PyErr_SetString(CompileError, msg.c_str());
+    throw nb::python_error();
+}
+
+void throw_pipeline_error(const std::string& msg) {
+    PyErr_SetString(PipelineError, msg.c_str());
+    throw nb::python_error();
+}
+
+void throw_resource_error(const std::string& msg) {
+    PyErr_SetString(ResourceError, msg.c_str());
+    throw nb::python_error();
+}
+
+void throw_validation_error(const std::string& msg) {
+    PyErr_SetString(ValidationError, msg.c_str());
+    throw nb::python_error();
+}
+
+// ============================================================================
+// Input Validation Helpers
+// ============================================================================
+
+constexpr uint32_t MAX_BUFFER_INDEX = 31;
+constexpr uint32_t MAX_TEXTURE_INDEX = 31;
+constexpr uint32_t MAX_SAMPLER_INDEX = 16;
+
+void validate_buffer_index(uint32_t index, const char* context) {
+    if (index > MAX_BUFFER_INDEX) {
+        throw_validation_error(
+            std::string(context) + ": buffer index " + std::to_string(index) +
+            " exceeds maximum (" + std::to_string(MAX_BUFFER_INDEX) + ")"
+        );
+    }
+}
+
+void validate_texture_index(uint32_t index, const char* context) {
+    if (index > MAX_TEXTURE_INDEX) {
+        throw_validation_error(
+            std::string(context) + ": texture index " + std::to_string(index) +
+            " exceeds maximum (" + std::to_string(MAX_TEXTURE_INDEX) + ")"
+        );
+    }
+}
+
+void validate_sampler_index(uint32_t index, const char* context) {
+    if (index > MAX_SAMPLER_INDEX) {
+        throw_validation_error(
+            std::string(context) + ": sampler index " + std::to_string(index) +
+            " exceeds maximum (" + std::to_string(MAX_SAMPLER_INDEX) + ")"
+        );
+    }
+}
+
+void validate_not_null(const void* ptr, const char* name) {
+    if (ptr == nullptr) {
+        throw_validation_error(std::string(name) + " cannot be null");
+    }
+}
+
+void validate_threadgroup_size(uint32_t w, uint32_t h, uint32_t d, uint32_t max_threads) {
+    uint64_t total = static_cast<uint64_t>(w) * h * d;
+    if (total > max_threads) {
+        throw_validation_error(
+            "Threadgroup size (" + std::to_string(w) + " x " + std::to_string(h) +
+            " x " + std::to_string(d) + " = " + std::to_string(total) +
+            ") exceeds device maximum (" + std::to_string(max_threads) + ")"
+        );
+    }
+    if (w == 0 || h == 0 || d == 0) {
+        throw_validation_error("Threadgroup dimensions must be greater than 0");
+    }
+}
+
+// ============================================================================
 // Helper: NS::String <-> Python str conversions
 // ============================================================================
 
@@ -79,13 +164,25 @@ void wrap_enums(nb::module_& m) {
 // ============================================================================
 
 void wrap_device(nb::module_& m) {
-    nb::class_<MTL::Device>(m, "Device")
+    nb::class_<MTL::Device>(m, "Device",
+        "Represents a GPU device capable of executing Metal commands.\n\n"
+        "The Device is the central object for creating all Metal resources including\n"
+        "buffers, textures, pipelines, and command queues. Use create_system_default_device()\n"
+        "to obtain the default GPU.\n\n"
+        "Thread Safety:\n"
+        "    Device methods are thread-safe. Multiple threads can create resources\n"
+        "    from the same device concurrently.")
         .def("new_command_queue",
             [](MTL::Device* self) {
                 return self->newCommandQueue();
             },
             nb::rv_policy::reference,
-            "Create a new command queue")
+            "Create a new command queue for submitting GPU work.\n\n"
+            "Returns:\n"
+            "    CommandQueue: A new command queue bound to this device.\n\n"
+            "Note:\n"
+            "    Create one queue per logical stream of work. Most applications\n"
+            "    need only one queue.")
 
         .def("new_buffer",
             [](MTL::Device* self, size_t length, NS::UInteger options) {
@@ -93,7 +190,14 @@ void wrap_device(nb::module_& m) {
             },
             "length"_a, "options"_a,
             nb::rv_policy::reference,
-            "Create a new buffer with specified length and options")
+            "Allocate a GPU buffer with specified size and storage mode.\n\n"
+            "Args:\n"
+            "    length: Size in bytes. Must be > 0.\n"
+            "    options: Resource options (e.g., ResourceStorageModeShared).\n\n"
+            "Returns:\n"
+            "    Buffer: A new GPU buffer.\n\n"
+            "Example:\n"
+            "    buf = device.new_buffer(1024, pm.ResourceStorageModeShared)")
 
         .def("new_buffer_with_data",
             [](MTL::Device* self, const void* pointer, size_t length, NS::UInteger options) {
@@ -101,7 +205,13 @@ void wrap_device(nb::module_& m) {
             },
             "data"_a, "length"_a, "options"_a,
             nb::rv_policy::reference,
-            "Create a new buffer initialized with data")
+            "Create a buffer initialized with data.\n\n"
+            "Args:\n"
+            "    data: Initial data to copy into the buffer.\n"
+            "    length: Size in bytes.\n"
+            "    options: Resource options.\n\n"
+            "Returns:\n"
+            "    Buffer: A new GPU buffer containing the data.")
 
         .def("new_library_with_source",
             [](MTL::Device* self, const std::string& source) {
@@ -117,14 +227,23 @@ void wrap_device(nb::module_& m) {
 
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
-                    throw std::runtime_error("Metal shader compilation failed: " + error_msg);
+                    throw_compile_error("Metal shader compilation failed: " + error_msg);
                 }
 
                 return lib;
             },
             "source"_a,
             nb::rv_policy::reference,
-            "Compile a new library from Metal shader source code")
+            "Compile Metal Shading Language source code into a library.\n\n"
+            "Args:\n"
+            "    source: Metal shader source code as a string.\n\n"
+            "Returns:\n"
+            "    Library: Compiled shader library.\n\n"
+            "Raises:\n"
+            "    CompileError: If the shader source contains syntax errors.\n\n"
+            "Note:\n"
+            "    This method releases the GIL during compilation, allowing\n"
+            "    other Python threads to run.")
 
         .def("new_compute_pipeline_state",
             [](MTL::Device* self, MTL::Function* function) {
@@ -137,26 +256,33 @@ void wrap_device(nb::module_& m) {
 
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
-                    throw std::runtime_error("Failed to create compute pipeline: " + error_msg);
+                    throw_pipeline_error("Failed to create compute pipeline: " + error_msg);
                 }
 
                 return state;
             },
             "function"_a,
             nb::rv_policy::reference,
-            "Create a compute pipeline state from a kernel function")
+            "Create a compute pipeline state from a kernel function.\n\n"
+            "Args:\n"
+            "    function: A kernel function from a compiled library.\n\n"
+            "Returns:\n"
+            "    ComputePipelineState: Ready-to-use pipeline state.\n\n"
+            "Raises:\n"
+            "    PipelineError: If pipeline creation fails.")
 
         .def_prop_ro("name",
             [](MTL::Device* self) {
                 return ns_string_to_std(self->name());
             },
-            "Device name")
+            "Human-readable name of the GPU (e.g., 'Apple M1 Pro').")
 
         .def_prop_ro("max_threads_per_threadgroup",
             [](MTL::Device* self) {
                 return self->maxThreadsPerThreadgroup();
             },
-            "Maximum threads per threadgroup")
+            "Maximum threads per threadgroup as (width, height, depth) tuple.\n\n"
+            "The product of dimensions must not exceed this limit.")
 
         // Phase 2: Texture methods
         .def("new_texture",
@@ -186,7 +312,7 @@ void wrap_device(nb::module_& m) {
 
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
-                    throw std::runtime_error("Failed to create render pipeline: " + error_msg);
+                    throw_pipeline_error("Failed to create render pipeline: " + error_msg);
                 }
 
                 return state;
@@ -268,7 +394,7 @@ void wrap_device(nb::module_& m) {
                 }
                 if (error) {
                     std::string error_msg = ns_string_to_std(error->localizedDescription());
-                    throw std::runtime_error("Failed to create binary archive: " + error_msg);
+                    throw_resource_error("Failed to create binary archive: " + error_msg);
                 }
                 return archive;
             },
@@ -290,20 +416,33 @@ void wrap_device(nb::module_& m) {
 // ============================================================================
 
 void wrap_command_queue(nb::module_& m) {
-    nb::class_<MTL::CommandQueue>(m, "CommandQueue")
+    nb::class_<MTL::CommandQueue>(m, "CommandQueue",
+        "A queue for submitting command buffers to the GPU.\n\n"
+        "Command queues serialize the execution of command buffers. Commands within\n"
+        "a single buffer execute in order; commands in different buffers may execute\n"
+        "concurrently or out of order.\n\n"
+        "Thread Safety:\n"
+        "    Command queues are thread-safe. Multiple threads can create command\n"
+        "    buffers from the same queue concurrently. However, each command buffer\n"
+        "    should only be used by one thread at a time.")
         .def("command_buffer",
             [](MTL::CommandQueue* self) {
                 return self->commandBuffer();
             },
             nb::rv_policy::reference,
-            "Create a new command buffer")
+            "Create a new command buffer for encoding GPU commands.\n\n"
+            "Returns:\n"
+            "    CommandBuffer: An empty command buffer ready for encoding.\n\n"
+            "Note:\n"
+            "    Command buffers are single-use. Create a new one for each\n"
+            "    submission to the GPU.")
 
         .def_prop_ro("device",
             [](MTL::CommandQueue* self) {
                 return self->device();
             },
             nb::rv_policy::reference,
-            "The device this queue was created from")
+            "The device this queue was created from.")
 
         .def_prop_rw("label",
             [](MTL::CommandQueue* self) {
@@ -312,7 +451,7 @@ void wrap_command_queue(nb::module_& m) {
             [](MTL::CommandQueue* self, const std::string& label) {
                 self->setLabel(std_string_to_ns(label));
             },
-            "Debug label for this queue");
+            "Debug label for identification in Xcode GPU debugger.");
 }
 
 // ============================================================================
@@ -320,13 +459,31 @@ void wrap_command_queue(nb::module_& m) {
 // ============================================================================
 
 void wrap_command_buffer(nb::module_& m) {
-    nb::class_<MTL::CommandBuffer>(m, "CommandBuffer")
+    nb::class_<MTL::CommandBuffer>(m, "CommandBuffer",
+        "A container for GPU commands to be executed.\n\n"
+        "Command buffers are single-use: create one, encode commands, commit it,\n"
+        "and optionally wait for completion. Do not reuse command buffers.\n\n"
+        "Typical workflow:\n"
+        "    1. Create command buffer from queue\n"
+        "    2. Create encoder (compute, render, or blit)\n"
+        "    3. Encode commands\n"
+        "    4. End encoding\n"
+        "    5. Commit\n"
+        "    6. Optionally wait_until_completed()\n\n"
+        "Thread Safety:\n"
+        "    Command buffers are NOT thread-safe. Only one thread should\n"
+        "    encode commands into a buffer at a time.")
         .def("compute_command_encoder",
             [](MTL::CommandBuffer* self) {
                 return self->computeCommandEncoder();
             },
             nb::rv_policy::reference,
-            "Create a compute command encoder")
+            "Create an encoder for compute (GPGPU) commands.\n\n"
+            "Returns:\n"
+            "    ComputeCommandEncoder: Encoder for dispatching compute kernels.\n\n"
+            "Note:\n"
+            "    Call end_encoding() when done before creating another encoder\n"
+            "    or committing the command buffer.")
 
         // Phase 2: Render command encoder
         .def("render_command_encoder",
@@ -335,7 +492,11 @@ void wrap_command_buffer(nb::module_& m) {
             },
             "descriptor"_a,
             nb::rv_policy::reference,
-            "Create a render command encoder")
+            "Create an encoder for rendering (graphics) commands.\n\n"
+            "Args:\n"
+            "    descriptor: Render pass configuration with attachments.\n\n"
+            "Returns:\n"
+            "    RenderCommandEncoder: Encoder for draw commands.")
 
         // Phase 2 Advanced: Blit command encoder
         .def("blit_command_encoder",
@@ -343,33 +504,42 @@ void wrap_command_buffer(nb::module_& m) {
                 return self->blitCommandEncoder();
             },
             nb::rv_policy::reference,
-            "Create a blit command encoder for memory operations")
+            "Create an encoder for memory transfer (blit) commands.\n\n"
+            "Returns:\n"
+            "    BlitCommandEncoder: Encoder for copy and fill operations.")
 
         .def("commit",
             [](MTL::CommandBuffer* self) {
                 self->commit();
             },
-            "Submit the command buffer for execution")
+            "Submit the command buffer to the GPU for execution.\n\n"
+            "After commit(), no more commands can be encoded. The buffer\n"
+            "will be scheduled and executed by the GPU.")
 
         .def("wait_until_completed",
             [](MTL::CommandBuffer* self) {
                 nb::gil_scoped_release release;
                 self->waitUntilCompleted();
             },
-            "Wait until the command buffer has completed execution")
+            "Block until the GPU has finished executing all commands.\n\n"
+            "Note:\n"
+            "    Releases the GIL while waiting, allowing other Python\n"
+            "    threads to run.")
 
         .def("wait_until_scheduled",
             [](MTL::CommandBuffer* self) {
                 nb::gil_scoped_release release;
                 self->waitUntilScheduled();
             },
-            "Wait until the command buffer has been scheduled")
+            "Block until the command buffer has been scheduled.\n\n"
+            "This returns earlier than wait_until_completed(). Use when\n"
+            "you need to know the buffer is queued but don't need results yet.")
 
         .def_prop_ro("status",
             [](MTL::CommandBuffer* self) {
                 return self->status();
             },
-            "Current status of the command buffer")
+            "Current execution status (NotEnqueued, Committed, Completed, etc.).")
 
         .def_prop_rw("label",
             [](MTL::CommandBuffer* self) {
@@ -378,7 +548,7 @@ void wrap_command_buffer(nb::module_& m) {
             [](MTL::CommandBuffer* self, const std::string& label) {
                 self->setLabel(std_string_to_ns(label));
             },
-            "Debug label for this command buffer");
+            "Debug label for identification in Xcode GPU debugger.");
 
     // CommandBufferStatus enum
     nb::enum_<MTL::CommandBufferStatus>(m, "CommandBufferStatus")
@@ -396,7 +566,17 @@ void wrap_command_buffer(nb::module_& m) {
 // ============================================================================
 
 void wrap_buffer(nb::module_& m) {
-    nb::class_<MTL::Buffer>(m, "Buffer", nb::is_weak_referenceable())
+    nb::class_<MTL::Buffer>(m, "Buffer", nb::is_weak_referenceable(),
+        "GPU memory buffer for storing data.\n\n"
+        "Buffers hold data accessible by the GPU. Use ResourceStorageModeShared\n"
+        "for CPU/GPU shared access (zero-copy with Apple Silicon).\n\n"
+        "Zero-Copy Access:\n"
+        "    data = np.frombuffer(buffer.contents(), dtype=np.float32)\n"
+        "    data[:] = my_array  # Direct write to GPU memory\n\n"
+        "Thread Safety:\n"
+        "    Buffer contents can be accessed from any thread, but you must\n"
+        "    ensure proper synchronization when both CPU and GPU access the\n"
+        "    same buffer. Wait for GPU completion before reading results.")
         .def("contents",
             [](MTL::Buffer* self) {
                 void* ptr = self->contents();
@@ -410,7 +590,15 @@ void wrap_buffer(nb::module_& m) {
                 );
             },
             nb::rv_policy::reference_internal,
-            "Get CPU-accessible pointer to buffer contents as numpy array")
+            "Get CPU-accessible view of buffer contents as numpy array.\n\n"
+            "Returns:\n"
+            "    numpy.ndarray: A uint8 view of the buffer memory.\n\n"
+            "Example:\n"
+            "    # Interpret as float32\n"
+            "    floats = np.frombuffer(buffer.contents(), dtype=np.float32)\n\n"
+            "Note:\n"
+            "    Only available for Shared or Managed storage modes.\n"
+            "    Returns a view - changes affect GPU memory directly.")
 
         .def("did_modify_range",
             [](MTL::Buffer* self, size_t offset, size_t length) {
@@ -418,19 +606,25 @@ void wrap_buffer(nb::module_& m) {
                 self->didModifyRange(range);
             },
             "offset"_a, "length"_a,
-            "Notify Metal that the CPU modified a range of the buffer")
+            "Notify Metal that the CPU modified a range (Managed mode only).\n\n"
+            "Args:\n"
+            "    offset: Start offset in bytes.\n"
+            "    length: Number of bytes modified.\n\n"
+            "Note:\n"
+            "    Only needed for ResourceStorageModeManaged buffers.\n"
+            "    Shared mode synchronizes automatically on Apple Silicon.")
 
         .def_prop_ro("length",
             [](MTL::Buffer* self) {
                 return self->length();
             },
-            "Buffer size in bytes")
+            "Buffer size in bytes.")
 
         .def_prop_ro("gpu_address",
             [](MTL::Buffer* self) {
                 return self->gpuAddress();
             },
-            "GPU virtual address of the buffer")
+            "GPU virtual address for argument buffer encoding.")
 
         .def_prop_rw("label",
             [](MTL::Buffer* self) {
@@ -439,7 +633,7 @@ void wrap_buffer(nb::module_& m) {
             [](MTL::Buffer* self, const std::string& label) {
                 self->setLabel(std_string_to_ns(label));
             },
-            "Debug label for this buffer");
+            "Debug label for identification in Xcode GPU debugger.");
 }
 
 // ============================================================================
@@ -510,57 +704,133 @@ void wrap_compute_pipeline(nb::module_& m) {
 // ============================================================================
 
 void wrap_compute_encoder(nb::module_& m) {
-    nb::class_<MTL::ComputeCommandEncoder>(m, "ComputeCommandEncoder")
+    nb::class_<MTL::ComputeCommandEncoder>(m, "ComputeCommandEncoder",
+        "Encoder for compute (GPGPU) commands.\n\n"
+        "Use this encoder to dispatch compute kernels. Typical workflow:\n"
+        "    1. set_compute_pipeline_state()\n"
+        "    2. set_buffer() for each buffer argument\n"
+        "    3. dispatch_threadgroups() or dispatch_threads()\n"
+        "    4. end_encoding()\n\n"
+        "Thread Safety:\n"
+        "    Encoders are NOT thread-safe. Only one thread should encode\n"
+        "    commands at a time. Create separate command buffers for\n"
+        "    concurrent encoding from multiple threads.")
         .def("set_compute_pipeline_state",
             [](MTL::ComputeCommandEncoder* self, MTL::ComputePipelineState* state) {
                 self->setComputePipelineState(state);
             },
             "state"_a,
-            "Set the active compute pipeline state")
+            "Set the compute pipeline (kernel) to execute.\n\n"
+            "Args:\n"
+            "    state: A ComputePipelineState from device.new_compute_pipeline_state().")
 
         .def("set_buffer",
             [](MTL::ComputeCommandEncoder* self, MTL::Buffer* buffer, size_t offset, uint32_t index) {
+                validate_buffer_index(index, "ComputeCommandEncoder.set_buffer");
                 self->setBuffer(buffer, offset, index);
             },
             "buffer"_a, "offset"_a, "index"_a,
-            "Bind a buffer at the specified index")
+            "Bind a buffer to a kernel argument slot.\n\n"
+            "Args:\n"
+            "    buffer: The buffer to bind.\n"
+            "    offset: Byte offset into the buffer.\n"
+            "    index: Argument index (0-31), matching [[buffer(N)]] in shader.\n\n"
+            "Raises:\n"
+            "    ValidationError: If index > 31.")
 
         .def("set_bytes",
             [](MTL::ComputeCommandEncoder* self, nb::bytes data, uint32_t index) {
+                validate_buffer_index(index, "ComputeCommandEncoder.set_bytes");
                 self->setBytes(data.c_str(), data.size(), index);
             },
             "data"_a, "index"_a,
-            "Set small inline data at the specified index")
+            "Set small inline constant data (up to 4KB).\n\n"
+            "Args:\n"
+            "    data: Bytes to copy inline.\n"
+            "    index: Argument index (0-31).\n\n"
+            "Note:\n"
+            "    Use for small constants. For larger data, use set_buffer().")
+
+        .def("set_texture",
+            [](MTL::ComputeCommandEncoder* self, MTL::Texture* texture, uint32_t index) {
+                validate_texture_index(index, "ComputeCommandEncoder.set_texture");
+                self->setTexture(texture, index);
+            },
+            "texture"_a, "index"_a,
+            "Bind a texture to a kernel argument slot.\n\n"
+            "Args:\n"
+            "    texture: The texture to bind.\n"
+            "    index: Argument index (0-31), matching [[texture(N)]] in shader.")
+
+        .def("set_sampler_state",
+            [](MTL::ComputeCommandEncoder* self, MTL::SamplerState* sampler, uint32_t index) {
+                validate_sampler_index(index, "ComputeCommandEncoder.set_sampler_state");
+                self->setSamplerState(sampler, index);
+            },
+            "sampler"_a, "index"_a,
+            "Bind a sampler state for texture filtering.\n\n"
+            "Args:\n"
+            "    sampler: The sampler state.\n"
+            "    index: Argument index (0-16), matching [[sampler(N)]] in shader.")
 
         .def("dispatch_threadgroups",
             [](MTL::ComputeCommandEncoder* self,
                uint32_t threadgroups_x, uint32_t threadgroups_y, uint32_t threadgroups_z,
                uint32_t threads_x, uint32_t threads_y, uint32_t threads_z) {
+                if (threadgroups_x == 0 || threadgroups_y == 0 || threadgroups_z == 0) {
+                    throw_validation_error("Threadgroup grid dimensions must be greater than 0");
+                }
+                if (threads_x == 0 || threads_y == 0 || threads_z == 0) {
+                    throw_validation_error("Threads per threadgroup dimensions must be greater than 0");
+                }
                 MTL::Size threadgroups(threadgroups_x, threadgroups_y, threadgroups_z);
                 MTL::Size threads_per_group(threads_x, threads_y, threads_z);
                 self->dispatchThreadgroups(threadgroups, threads_per_group);
             },
             "threadgroups_x"_a, "threadgroups_y"_a, "threadgroups_z"_a,
             "threads_x"_a, "threads_y"_a, "threads_z"_a,
-            "Dispatch compute work with specified threadgroup configuration")
+            "Dispatch compute kernel with explicit threadgroup grid.\n\n"
+            "Args:\n"
+            "    threadgroups_x/y/z: Number of threadgroups in each dimension.\n"
+            "    threads_x/y/z: Threads per threadgroup in each dimension.\n\n"
+            "Example:\n"
+            "    # Process 1024 elements with 256 threads per group\n"
+            "    encoder.dispatch_threadgroups(4, 1, 1, 256, 1, 1)\n\n"
+            "Raises:\n"
+            "    ValidationError: If any dimension is 0.")
 
         .def("dispatch_threads",
             [](MTL::ComputeCommandEncoder* self,
                uint32_t threads_x, uint32_t threads_y, uint32_t threads_z,
                uint32_t threads_per_group_x, uint32_t threads_per_group_y, uint32_t threads_per_group_z) {
+                if (threads_x == 0 || threads_y == 0 || threads_z == 0) {
+                    throw_validation_error("Thread grid dimensions must be greater than 0");
+                }
+                if (threads_per_group_x == 0 || threads_per_group_y == 0 || threads_per_group_z == 0) {
+                    throw_validation_error("Threads per threadgroup dimensions must be greater than 0");
+                }
                 MTL::Size threads(threads_x, threads_y, threads_z);
                 MTL::Size threads_per_group(threads_per_group_x, threads_per_group_y, threads_per_group_z);
                 self->dispatchThreads(threads, threads_per_group);
             },
             "threads_x"_a, "threads_y"_a, "threads_z"_a,
             "threads_per_group_x"_a, "threads_per_group_y"_a, "threads_per_group_z"_a,
-            "Dispatch compute work with specified total thread count")
+            "Dispatch compute kernel with total thread count (non-uniform).\n\n"
+            "Metal automatically calculates threadgroup count. Use for arrays\n"
+            "that don't divide evenly by threadgroup size.\n\n"
+            "Args:\n"
+            "    threads_x/y/z: Total threads to execute.\n"
+            "    threads_per_group_x/y/z: Threads per threadgroup.\n\n"
+            "Raises:\n"
+            "    ValidationError: If any dimension is 0.")
 
         .def("end_encoding",
             [](MTL::ComputeCommandEncoder* self) {
                 self->endEncoding();
             },
-            "Finish encoding commands");
+            "Finish encoding and release the encoder.\n\n"
+            "Must be called before creating another encoder or committing\n"
+            "the command buffer.");
 }
 
 // ============================================================================
@@ -1278,6 +1548,7 @@ void wrap_render_encoder(nb::module_& m) {
 
         .def("set_vertex_buffer",
             [](MTL::RenderCommandEncoder* self, MTL::Buffer* buffer, uint32_t offset, uint32_t index) {
+                validate_buffer_index(index, "RenderCommandEncoder.set_vertex_buffer");
                 self->setVertexBuffer(buffer, offset, index);
             },
             "buffer"_a, "offset"_a, "index"_a,
@@ -1285,20 +1556,39 @@ void wrap_render_encoder(nb::module_& m) {
 
         .def("set_fragment_buffer",
             [](MTL::RenderCommandEncoder* self, MTL::Buffer* buffer, uint32_t offset, uint32_t index) {
+                validate_buffer_index(index, "RenderCommandEncoder.set_fragment_buffer");
                 self->setFragmentBuffer(buffer, offset, index);
             },
             "buffer"_a, "offset"_a, "index"_a,
             "Bind a fragment buffer at the specified index")
 
+        .def("set_vertex_texture",
+            [](MTL::RenderCommandEncoder* self, MTL::Texture* texture, uint32_t index) {
+                validate_texture_index(index, "RenderCommandEncoder.set_vertex_texture");
+                self->setVertexTexture(texture, index);
+            },
+            "texture"_a, "index"_a,
+            "Bind a vertex texture at the specified index")
+
         .def("set_fragment_texture",
             [](MTL::RenderCommandEncoder* self, MTL::Texture* texture, uint32_t index) {
+                validate_texture_index(index, "RenderCommandEncoder.set_fragment_texture");
                 self->setFragmentTexture(texture, index);
             },
             "texture"_a, "index"_a,
             "Bind a fragment texture at the specified index")
 
+        .def("set_vertex_sampler_state",
+            [](MTL::RenderCommandEncoder* self, MTL::SamplerState* sampler, uint32_t index) {
+                validate_sampler_index(index, "RenderCommandEncoder.set_vertex_sampler_state");
+                self->setVertexSamplerState(sampler, index);
+            },
+            "sampler"_a, "index"_a,
+            "Bind a vertex sampler at the specified index")
+
         .def("set_fragment_sampler_state",
             [](MTL::RenderCommandEncoder* self, MTL::SamplerState* sampler, uint32_t index) {
+                validate_sampler_index(index, "RenderCommandEncoder.set_fragment_sampler_state");
                 self->setFragmentSamplerState(sampler, index);
             },
             "sampler"_a, "index"_a,
@@ -1954,6 +2244,14 @@ void wrap_capture_scope(nb::module_& m) {
 
 NB_MODULE(_pymetal, m) {
     m.doc() = "Python bindings for Metal GPU API via metal-cpp";
+
+    // Import custom exception types from pymetal.exceptions
+    nb::module_ exceptions = nb::module_::import_("pymetal.exceptions");
+    MetalError = exceptions.attr("MetalError").ptr();
+    CompileError = exceptions.attr("CompileError").ptr();
+    PipelineError = exceptions.attr("PipelineError").ptr();
+    ResourceError = exceptions.attr("ResourceError").ptr();
+    ValidationError = exceptions.attr("ValidationError").ptr();
 
     // Wrap all Phase 1 components
     wrap_enums(m);
