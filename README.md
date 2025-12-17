@@ -8,7 +8,7 @@ Python bindings for Apple's Metal GPU API, enabling high-performance GPU computi
 
 ## Overview
 
-PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https://github.com/bkaradzic/metal-cpp) and [nanobind](<https://github.com/wjakob/nanobind>, allowing you to:
+PyMetal provides Pythonic access to Apple's Metal API through [metal-cpp](https://github.com/bkaradzic/metal-cpp) and [nanobind](<https://github.com/wjakob/nanobind>), allowing you to:
 
 - Write and execute Metal compute shaders from Python
 - Build complete graphics pipelines with vertex/fragment shaders
